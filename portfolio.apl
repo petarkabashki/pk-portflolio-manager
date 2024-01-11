@@ -199,7 +199,7 @@ dq[;2] ≢¨ {⍵[⍋⍵]}lbags[;1]
 ]display  cp← ⍎¨('E-'⎕R 'E¯')¨ ⊢dq[;,3]
 
 ⍝ --- Current portfolio state
-pfstate← cp {pc←¯1+⍺÷ ⍵[;,3]⋄⍵,⍺,pc,pc×⍵[;,4] } lbags
+pfstate← cp {pc←¯1+⍺÷ ⍵[;,3]⋄⍵,⍺,pc,(pc×⍵[;,4]),pc×⍵[;,2] } lbags
 pfstate (⎕CSV⍠'IfExists' 'Replace') 'portfolio.csv' 
 ⍝ {⍵[;6]} ⊢{(⍵[;1]≢¨⊂'GBP')⌿⍵} ⊢ dq {⍵,⍺[;3]} {⍵[⍋⍵[;1];]} lbags
 

@@ -1,3 +1,4 @@
+
 ⍝ --- Quote currencies
 qb← 'USDC' 'BUSD' 'GBP' 'USDT' 'BTC' 'ETH' 'DAI'
 
@@ -176,18 +177,44 @@ hbags ← 'bsize' 'bprice' 'btotal' 'pnl'
 ⍝ ⎕←qtr,⊃⍪/(¯1↑¨rbags) ⍝ bags after all transactions 
 ⍝ ]display 4↑ lbags←qtr, ((2∘(↑[2])⊢),((3∘(⌷[2])⊢)÷(2∘(⌷[2])⊢)),(¯2∘(↑[2])⊢)) ⊃⍪/(¯1↑¨rbags) 
 
-⍝ Latest bags with: size, average price, total, cumpnl
-]display 5↑ lbags← qtr,{⍵[;1],(÷/⍵[;2 1]),⍵[;2 4]}⊢ ⊢⊃⍪/(¯1↑¨rbags) 
-⍝ ]display 5↑ lbags← ((2↑[2]⊢),(((3⌷[2]⊢))÷(2⌷[2]⊢)),(¯3↑[2]⊢) ) ⊢ qtr, ((2∘(↑[2])⊢),(¯3∘(↑[2])⊢))  ⊢⊃⍪/(¯1↑¨rbags) 
+⍝ -------------------------------------------------------
+⍝ --- Latest bags with: size, average price, total, cumpnl
+]display 5↑ lbags← {⍵[⍋⍵[;1];]} qtr,{⍵[;1],(÷/⍵[;2 1]),⍵[;2 4]}⊢ ⊢⊃⍪/(¯1↑¨rbags) 
 
+⍝ lbags←{⍵[⍋⍵]}lbags[;1]
+⍝ ]display 5↑ lbags← ((2↑[2]⊢),(((3⌷[2]⊢))÷(2⌷[2]⊢)),(¯3↑[2]⊢) ) ⊢ qtr, ((2∘(↑[2])⊢),(¯3∘(↑[2])⊢))  ⊢⊃⍪/(¯1↑¨rbags) 
+⍝ --- Save sorted bags to csv
 lbags ('asset' 'size' 'avgPrice' 'total' 'cupnl') (⎕CSV⍠'IfExists' 'Replace') 'latest-bags.csv' 
+]display lbags← {(~⍵[;1]∊'GBP' 'USDT' 'USDC' 'BUSD')⌿⍵ }lbags
+
+⍝ --- Load latest prices/quotes
+(dq hq)←⎕CSV'cmc-quotes.csv' '' ⍬ 1 ⍝ load trades
+dq←{⍵[⍋⍵[;2];]}⊢ dq
+]display dq← {(~⍵[;2]∊'GBP' 'USDT' 'USDC' 'BUSD')⌿⍵ }dq
+
+⍝ --- check lists are equivalent 
+dq[;2] ≢¨ {⍵[⍋⍵]}lbags[;1]
+
+⍝ --- Current price 
+]display  cp← ⍎¨('E-'⎕R 'E¯')¨ ⊢dq[;,3]
+
+⍝ --- Current portfolio state
+pfstate← cp {pc←¯1+⍺÷ ⍵[;,3]⋄⍵,⍺,pc,pc×⍵[;,4] } lbags
+pfstate (⎕CSV⍠'IfExists' 'Replace') 'portfolio.csv' 
+⍝ {⍵[;6]} ⊢{(⍵[;1]≢¨⊂'GBP')⌿⍵} ⊢ dq {⍵,⍺[;3]} {⍵[⍋⍵[;1];]} lbags
 
 ⍝ --- Export transactions and rolling bags
 ⍝ ( (⊃dtr[1]),(⊃rbags[1]) ) (htr, hbags) (⎕CSV⍠'IfExists' 'Replace') 'tran-bags.csv' 
 
+⍝ -----------------------------
 ⍝ --- Sort bags by cumpnl
-{(3↑[2]⍵), (20 4∘⍕)¨ 3↓[2]⍵} {⍵[⍋¯1↑[2]⍵;]} lbags
+⍝ {(3↑[2]⍵), (20 4∘⍕)¨ 3↓[2]⍵} {⍵[⍋¯1↑[2]⍵;]} lbags
+( (⊂∘⍋(,¯1↑[2]⊢))⌷⊢) ⊢ lbags
 
+
+⍝ -----------------------------
+⍝ --- format total, cumpnl
+((¯2↓[2]⊢), ((20 4∘⍕)¨(¯2∘(↑[2]))))⊢ ((⊂∘⍋(,¯1↑[2]⊢))⌷⊢) ⊢ lbags
 
 ⍝ Concatenate transactions, bags, pnl
 ⍴¨trbnls←{⍵,+⍀¯1↑[2]⍵}¨ dtr{⍺,⍵}¨ ⊢ {¯1↓[2]⍵}¨ rbags 

@@ -34,7 +34,7 @@ p←¯5↓¨d[;3] ⍝ extract pairs
 10↑ b←q{(-≢⍺)↓⍵}¨p ⍝ Extract base currencies
 d[;4]←('SELL' 'BUY')[1+(≡∘'Buy')¨d[;4]] ⍝ Massage Buy/Sell
 ⍝ d←⍕d ⍝ convert numerics
-dbtg←d[;1],(⊂'phemex'),p,'-',d[;4],b,q,d[;7 8],×/d[;7 8]
+dbtg←d[;1],(⊂'bitget'),p,'-',d[;4],b,q,d[;7 8],×/d[;7 8]
 
 ⍝ --------------------------------------------
 ⍝ BINANCE
@@ -90,9 +90,18 @@ qhi←'BTC' 'ETH' 'GBP'
 dhi←⌷fill_missing¨{⍵[;1] ,[1.5]  4÷⍨ +/ ⍵[;2 3 4 5]}¨{kload⊢'./data-csv/',⍵,'_USDT-1m.csv' }¨qhi
 
 
+⍝ --------------------------------------------------------------------------------
+⍝ --------------------------------------------------------------------------------
+
 ⍝ -------------------------------------------
 ⍝ --- Load trade data and split by asset
 ⍝ 
+
+
+⍝ --- Quote currencies
+qb← 'USDC' 'BUSD' 'GBP' 'USDT' 'BTC' 'ETH' 'DAI'
+
+
 (d h)← ⎕CSV 'all-trades.csv' '' (1 1 1 1 1 1 1 2 2 2) 1 ⍝ load trades 
 h←(⊂'ts'), h ⍝ add ts as first column
 d←(¯1 12⎕DT 0,⍨¨5↑¨ ⍎¨('-|T|:' ⎕R ',') ⊢ d[;1]) , d ⍝ add unix timestamp as first column
@@ -105,6 +114,7 @@ d←d[⍋d[;1];] ⍝ Sort by timestamp
 ⍝ -------------------------------------------
 ⍝ --- Convert to USDT
 ⍝ 
+
 qconv←'ETH' 'BTC' 'GBP' ⍝ quote currencies to be converted
 dconv←dtd[qtd ⍳ qconv] ⍝ transactions to be converted, in order of qconv
 ⍝ ---historical prices for qconv/dconv
@@ -143,24 +153,41 @@ HorMat ← {(¯2↑1,⍴⍵)⍴⍵}
 ApplySide ← {(⍵[;1]×⍵[;2]),⍵[;,3],⍵[;1]×⍵[;4]}
 
 ⍝ --- Function that Calculates Rolling Bag for asset
-RollingBag ← {1↓⊖⊃{w←HorMat ⍵⋄p←{⍵[1]>0:⍵[2]⋄⍵[3]}⍺[1],⍺[2],w[1;2]⋄ns←⍺[1]+w[1;1]⋄nt←w[1;3]+⍺[1]×p⋄(ns,(nt{⍵=0:0⋄⍺÷⍵}ns),nt)⍪w} /↓⊖ 0⍪ ⍵}
+⍝ RollingBag ← {1↓⊖⊃{w←HorMat ⍵⋄p←{⍵[1]>0:⍵[2]⋄⍵[3]}⍺[1],⍺[2],w[1;2]⋄ns←⍺[1]+w[1;1]⋄nt←w[1;3]+⍺[1]×p⋄(ns,(nt{⍵=0:0⋄⍺÷⍵}ns),nt)⍪w} /↓⊖ 0⍪ ⍵}
 
 ⍝ 10↑¨ 4⌷ ⊢{1↓⊖⊃{w←HorMat ⍵⋄p←{⍵[1]>0:⍵[2]⋄⍵[3]}⍺[1],⍺[2],w[1;2]⋄ns←⍺[1]+w[1;1]⋄nt←w[1;3]+⍺[1]×p⋄(ns,(nt{⍵=0:0⋄⍺÷⍵}ns),nt)⍪w} /↓⊖ 0⍪ ⍵}¨  {¯3↑[2]⍵}¨ dtr
-10↑¨ 4⌷ rbags←{⍵,+⍀¯1↑[2]⍵}¨ {1↓⊖⊃{w←HorMat ⍵⋄p←{⍵[1]>0:⍵[2]⋄⍵[3]}⍺[1],⍺[2],w[1;2]⋄ns←⍺[1]+w[1;1]⋄nt←w[1;3]+⍺[1]×p⋄pnl←⍺{⍺[1]>0:0⋄⍺[1]×⍵[2]-⍺[2]}w[1;]⋄(ns,(nt{⍵=0:0⋄⍺÷⍵}ns),nt,pnl)⍪w} /↓⊖ ⊢0⍪ ⍵}¨ 0,⍨¨ {¯3↑[2]⍵}¨ dtr
 
+⍝ 10↑¨ 4⌷ rbags← {1↓⊖⊃{w←HorMat ⍵⋄p←{⍵[1]>0:⍵[2]⋄⍵[3]}⍺[1],⍺[2],w[1;2]⋄ns←⍺[1]+w[1;1]⋄nt←w[1;3]+⍺[1]×p⋄pnl←⍺{⍺[1]>0:0⋄⍺[1]×⍵[2]-⍺[2]}w[1;]⋄(ns,(nt{⍵=0:0⋄⍺÷⍵}ns),nt,pnl)⍪w} /↓⊖ ⊢0⍪ ⍵}¨ 0,⍨¨ {¯3↑[2]⍵}¨ dtr
 
+]display ⍴¨ rbags← (↑∘(1↓⊢)∘⌽∘⊃⊃({pnl←-(⍺[1]<0)×⍺[2]-⍺[1]×{⍵[1]=0:0⋄÷/⌽⍵}2↑⊃⍵⋄tot←(2⌷⊃⍵)+⍺[2]+pnl⋄(⊂(⍺[1]+1⌷⊃⍵) tot pnl),⊆⍵}/⍤⌽((⊂⊂0 0 0),⊢))∘↓(⊂8 10)∘(⌷[2]))¨ dtr
 
+⍝ --- Add cumulative pnls 
+]display ⍴¨ rbags← (⊢, +⍀ ⍤ (¯1∘(↑[,2])⊢))¨ rbags
+⍝ 10↑¨ 4∘⌷ ⊢ (⊢, +⍀ ⍤ (¯1∘(↑[,2])⊢))¨ rbags
+
+⍝ --- Save BTC as an example
+]display  (⊃ 1⌷⊢ (((⊂2 8 9 10)⌷[2]⊢)¨ dtr),¨ rbags) (⎕CSV⍠'IfExists' 'Replace') 'btc.csv'   
+    
 ⍝ --- Calculate rolling bags 
 hbags ← 'bsize' 'bprice' 'btotal' 'pnl'
 ⍝ rbags←RollingBag¨ {¯3↑[2]⍵}¨ dtr
 ⍝ pnls← dtr{m←⍺[;6]=-1⋄m×(⍺[;7]-⍵[;2])×⍵[;1]}¨ rbags ⍝ Calculate PNLs
 
 ⍝ ⎕←qtr,⊃⍪/(¯1↑¨rbags) ⍝ bags after all transactions 
+⍝ ]display 4↑ lbags←qtr, ((2∘(↑[2])⊢),((3∘(⌷[2])⊢)÷(2∘(⌷[2])⊢)),(¯2∘(↑[2])⊢)) ⊃⍪/(¯1↑¨rbags) 
 
-lbags←{⍵[⍋⍵[;1];]} qtr,{⍵[;1],(⍵[;3]÷⍵[;1]),⍵[;,3]}⊃⍪/(¯1↑¨rbags) ⍝ Latest bags with average price
-lbags ('asset' 'size' 'avgPrice' 'totalUSDT') (⎕CSV⍠'IfExists' 'Replace') 'latest-bags.csv' 
+⍝ Latest bags with: size, average price, total, cumpnl
+]display 5↑ lbags← qtr,{⍵[;1],(÷/⍵[;2 1]),⍵[;2 4]}⊢ ⊢⊃⍪/(¯1↑¨rbags) 
+⍝ ]display 5↑ lbags← ((2↑[2]⊢),(((3⌷[2]⊢))÷(2⌷[2]⊢)),(¯3↑[2]⊢) ) ⊢ qtr, ((2∘(↑[2])⊢),(¯3∘(↑[2])⊢))  ⊢⊃⍪/(¯1↑¨rbags) 
+
+lbags ('asset' 'size' 'avgPrice' 'total' 'cupnl') (⎕CSV⍠'IfExists' 'Replace') 'latest-bags.csv' 
+
 ⍝ --- Export transactions and rolling bags
-( (⊃dtr[1]),(⊃rbags[1]) ) (htr, hbags) (⎕CSV⍠'IfExists' 'Replace') 'tran-bags.csv' 
+⍝ ( (⊃dtr[1]),(⊃rbags[1]) ) (htr, hbags) (⎕CSV⍠'IfExists' 'Replace') 'tran-bags.csv' 
+
+⍝ --- Sort bags by cumpnl
+{(3↑[2]⍵), (20 4∘⍕)¨ 3↓[2]⍵} {⍵[⍋¯1↑[2]⍵;]} lbags
+
 
 ⍝ Concatenate transactions, bags, pnl
 ⍴¨trbnls←{⍵,+⍀¯1↑[2]⍵}¨ dtr{⍺,⍵}¨ ⊢ {¯1↓[2]⍵}¨ rbags 
@@ -269,14 +296,70 @@ asbs←{tr←⍵⋄d←⌊12 1⎕DT tr[;1]⋄(ixs ixb)←{⍵[⍋⍵]}¨{⍵[⍋
 10↑¨ 4⌷ trallpnls← rbags {⍵,¯1↑[,2]⍺}¨ trampnls
 
 ⍝ --- PNLs with dates, sorted by time
-10↑ dtpnls←  {⍵[⍋⍵[;1];]} ⊃⍪/ dtr {⍺[;1 2],⍵}¨ +/¨ trallpnls 
+10↑ dtpnls←  {⍵[⍋⍵[;1];]} ⊃⍪/ (~qtr ∊ xqs) / ⊢ dtr {⍺[;1 2],⍵}¨ +/¨ trallpnls 
 
 ⍝ --- yearly PNL
 y←2022
 +⌿ ¯1↑[2] ypnl← dtpnls[ ⍸ (dtpnls[;1] < ¯1 12⎕DT ⊂(y 04 06))∧dtpnls[;1] ≥ ¯1 12⎕DT ⊂((y-1) 04 06);] 
 
+⍝ ----------
+
+]dinput 
+fill_missing ← {  ⍝ Fill missing rows with average of both sides
+    ix←⍸ ((1↓⍵[;1])-(¯1↓⍵[;1])) ≠ 60000 ⍝ indexes of missing data
+    av←2÷⍨⍵[ix;2] + ⍵[ix+1;2] ⍝ average of left and right sides
+    m←¯1+60000÷⍨⍵[ix+1;1]-⍵[ix;1]
+    xx←⍵⍪ ↑↑,/(⍵[ix;1]+60000×⍳¨m),¨¨av
+    xx[⍋xx[;1];] ⍝ Insert missing values and sort
+}
+
+ms2dt← (12 ¯1)∘⎕DT ⍝ converts timestamp(ms) to datetime
+]display 10↑ 12 ¯1⎕DT  (1000×60×60) (⊢-|) dtpnls[;1]
 
 
+tper←(1000×60×60×24) ⍝ period in ms
+
+⍝ --- selects column
+cc←(⊣↑[2]⊢)
+
+⍝ --- Calculates cumulative pnl
+¯10↑ cupnls← ((1↑[2]⊢),(+⍀¯1↑[2]⊢)) ⊢ dtpnls[;1 3]
+
+⍝ --- cuts ts to per
+]display ¯10↑  ((tper(⊢-|)1∘cc),(¯1∘cc)) cupnls
+
+⍝ --- aggregates to hours/days..., leaving only the last cumulative PNL
+]display ≢ lcpnls← (⍪(1∘cc)(¯1∘↑⊢)⌸⊢) ⊢ ((tper (⊢-|)1∘cc),(¯1∘cc)) cupnls
+⍝ ]display ¯10↑ perets ← (⍪({⍵[;,1]})({¯1↑⍵}⌸)⊢) ⊢ (+⍀¯1↑[2]dtpnls),⍨tper (⊢-|) 1↑[2] dtpnls
+
+]display  ¯10↑ (1∘↓-¯1∘↓) ,¯1↑[2] perets ⌿ ⍨1,⍨(tper÷⍨1∘↓-¯1∘↓)⊢,1↑[2]⊢ perets 
+
+⍝ --- number of periods between first and last transaction
+]display tper÷⍨ -/ ⊢ ¯1 1 (⊃⊣↑⊢)¨ ⊂lcpnls
+
+
+]display ¯10↑  (,((1⍪⍨tper÷⍨1∘↓-¯1∘↓) 1∘cc)) lcpnls 
+
+⍝ --- Stretch periods evenly 
+]display ¯10↑ ≢ ((,((1⍪⍨tper÷⍨1∘↓-¯1∘↓) 1∘cc) lcpnls) ⌿ lcpnls)  
+
+⍝ --- plot cumulative pnl over time
+]plot ↓⍉⌽((,((1⍪⍨tper÷⍨1∘↓-¯1∘↓) 1∘cc) lcpnls) ⌿ lcpnls)  
+
+⍝ --- cuts ts to hours after accumulating pnl
+⍝ ]display 10↑ (+⍀¯1↑[2]dtpnls),⍨tper (⊢-|) 1↑[2] dtpnls
+
+⍝ ]display 10↑ (tper÷⍨1∘↓-¯1∘↓) tper (⊢-|) 1↑[2] dtpnls
+
+⍝ --- cuts timestamps(ms) to hours 
+⍝ ]display 10↑ 12 ¯1⎕DT  tper (⊢-|) dtpnls[;1]
+
+⍝ ]display   ⊢ 10↑ ((⊂⌊/,⌈/),⊢) tper (⊢-|) dtpnls[;1]
+
+
+⍝ ---------------------------------------------------------------------
+⍝ ---------------------------------------------------------------------
+⍝ ---------------------------------------------------------------------
 ⍝ ---------------------------------------------------------------------
 ⍝ --- Calculate rolling bags 
 hbags ← 'bsize' 'bprice' 'btotal' 'pnl'
@@ -302,20 +385,11 @@ pntrs←{⍵,+⍀¯1↑[2]⍵} {⍵[⍋⍵[;1 4];]} ⊃,[1]/ (~qtr ∊ xqs) / tr
 pntrs hpnltr csvr 'pnl-transactions.csv'
 
 ⍝ -------------------------------------------
+⍝ ---------   MISC   ----------
+⍝ -------------------------------------------
+⍝ -------------------------------------------
 
+⍝  --- List pairs by exchange
+xp←{(~⍵[;2]∊⊂'USDT') ⌿⍵} ⊢ ∪ tr[;3 4]
 
-⍝ ---Generate additional transactions for quotes in BTC ETH GBP
-⍝ x←(d[;8] ∊ 'BTC' 'ETH' 'GBP') /[1] d⋄x[;7 9 6]←x[;8 11],('SELL' 'BUY')[1+x[;6] ∊⊂'SELL']⋄x[;10 11]←0⋄x[;8]← ⊂'USDT'
-
-⍝ ⍝ --Fill in BTC and ETH prices
-⍝ fd←fbtc⋄bx←(x[;7] ≡¨ ⊂'BTC')⋄tsx←bx/x[;1]⋄fix←fd[;1] ⍳ tsx⋄x[;10]←(fd[;2][fix])@(⍸bx)⊢x[;10]
-⍝ fd←feth⋄bx←(x[;7] ≡¨ ⊂'ETH')⋄tsx←bx/x[;1]⋄fix←fd[;1] ⍳ tsx⋄x[;10]←(fd[;2][fix])@(⍸bx)⊢x[;10]
-⍝ fd←fgbp⋄bx←(x[;7] ≡¨ ⊂'GBP')⋄tsx←bx/x[;1]⋄fix←fd[;1] ⍳ tsx⋄x[;10]←(fd[;2][fix])@(⍸bx)⊢x[;10]
-⍝ +/x[;10]=0 ⍝ check if any prices are empty
-⍝ x[;11]←×/[2]x[;9 10] ⍝ calculate total
-⍝ +/x[;11]=0 ⍝ check if any totals are empty
-
-⍝ dd←{⍵[⍋⍵[;1];]}d⍪x ⍝ append supplementary transactions
-------------------------------------------
----  Main calculations
-------------------------------------------
+xp[;1]{⍺, ⊂ ⍵[;2],¨⊂'/USDT'}⌸xp[;1 2]

@@ -79,7 +79,7 @@ fill_missing ← {  ⍝ Fill missing rows with average of both sides
     xx←⍵⍪ ↑↑,/(⍵[ix;1]+60000×⍳¨m),¨¨av
     xx[⍋xx[;1];] ⍝ Insert missing values and sort
 }
-
+⍝ --- Function to load candlesticks
 kload ← { (d h) ← ⎕CSV ⍵ '' (2 2 2 2 2 2) 1 ⋄ d}
 side_inv←{('SELL' 'BUY')[1+⍵ ∊⊂'SELL']}⍝ function to invert BUY/SELL to +1/-1
 ⍝ --Load consolidated trades from csv
@@ -187,6 +187,11 @@ hbags ← 'bsize' 'bprice' 'btotal' 'pnl'
 lbags ('asset' 'size' 'avgPrice' 'total' 'cupnl') (⎕CSV⍠'IfExists' 'Replace') 'latest-bags.csv' 
 ]display lbags← {(~⍵[;1]∊'GBP' 'USDT' 'USDC' 'BUSD')⌿⍵ }lbags
 
+
+⍝ --------------------------------------------------------------------
+⍝ ----------------------  POSITION STATS  ----------------------------
+⍝ --------------------------------------------------------------------
+
 ⍝ --- Load latest prices/quotes
 (dq hq)←⎕CSV'cmc-quotes.csv' '' ⍬ 1 ⍝ load trades
 dq←{⍵[⍋⍵[;2];]}⊢ dq
@@ -196,10 +201,11 @@ dq←{⍵[⍋⍵[;2];]}⊢ dq
 dq[;2] ≢¨ {⍵[⍋⍵]}lbags[;1]
 
 ⍝ --- Current price 
-]display  cp← ⍎¨('E-'⎕R 'E¯')¨ ⊢dq[;,3]
+
+]display  cp← ⍎¨('e-'⎕R 'E¯')¨ ⊢dq[;,3]
 
 ⍝ --- Current portfolio state
-pfstate← cp {pc←¯1+⍺÷ ⍵[;,3]⋄⍵,⍺,pc,(pc×⍵[;,4]),pc×⍵[;,2] } lbags
+pfstate← cp {pc←¯1+⍺÷ ⍵[;,3]⋄⍵,⍺,pc,(pc×⍵[;,4]),⍺×⍵[;,2] } lbags
 pfstate (⎕CSV⍠'IfExists' 'Replace') 'portfolio.csv' 
 ⍝ {⍵[;6]} ⊢{(⍵[;1]≢¨⊂'GBP')⌿⍵} ⊢ dq {⍵,⍺[;3]} {⍵[⍋⍵[;1];]} lbags
 
@@ -416,7 +422,94 @@ pntrs hpnltr csvr 'pnl-transactions.csv'
 ⍝ -------------------------------------------
 ⍝ -------------------------------------------
 
+⍝ -------------------------------------------
+⍝ --- Statistical functions
+
+sort←((⊂⍋)⌷⊢) 
+⍝ --- Mean, variance, standard deviation, nth moment 
+mean←(+/÷≢)
+⍝ var←((+/⍤×⍨mean-⊢)÷(¯1+≢)) 
+var←((+/⍤×⍨(+/÷≢)-⊢)÷(¯1+≢))
+std←0.5*⍨ var
+mom← {((≢) +/⍤ ÷⍨ ∘ (⍺*⍨⊢)⊢-(+/÷≢))⍵}
+qtl← ((((⌈⊣×(≢⊢))⌷⊢)∘((⊂⍋)⌷⊢))) ⍝ quantlie : 0.3 qtl array 
+⍝ --- Summary statistics
+
+
+⍝ --- Candlestick utilities
+kload ← { (d h) ← ⎕CSV ⍵ '' (2 2 2 2 2 2) 1 ⋄ d}
+
+k←kload⊢'./data-csv/binance/','ALGO','_USDT-4h.csv'
+
+⍝ --- number of days in the same direction
+
+
+⍝ --- EMAS
+
+]display 5↑ lk← ⍟ (⊂2 3 4 5)⌷[2] k
+ema← {k←2÷1+⍺⋄⌽⊃{((k×⍺)+(1-k)×⊃⍵),⍵}/⊢ ⌽⊢((⊂1↑⊢),(1↓⊢)) ⍵}
+
+⍴ emas← ⍉↑(14 21 50 100 200) ema¨ ⊂,¯1↑[2]lk
+
+⍝ --- Plot close price and emas
+]plot {(⊂↓∘⍉(1↓[2]⊢)⍵), ⊂,1↑[2]⍵} 200↑ 4000↓  100↓ (⍳≢k),lk[;4 3 2],emas[;,1 2 3 4 5] 
+
+⍝ 5↑ {⍵[;2 3 4] -¨ ⊂⍵[;1]} ⊢ ⍟ ¯4 ↑[2] ¯1↓[2] 10↑cnd
+⍝ --- take log of ohlc
+
+
+]display ((((0,⊢)∘(¯1∘↓) (+\(,¯1↑[2]⊢)))),⊢)⊢((1↓[2]⊢)-[1](⊂¨⍤,(1↑[2]⊢))) ⊢ 5↑  ⊢ ⍟ ¯4 ↑[2] ¯1↓[2] cnd
+
+
 ⍝  --- List pairs by exchange
 xp←{(~⍵[;2]∊⊂'USDT') ⌿⍵} ⊢ ∪ tr[;3 4]
 
 xp[;1]{⍺, ⊂ ⍵[;2],¨⊂'/USDT'}⌸xp[;1 2]
+
+⍝ get timestamps for start and end of financial year/year+1
+(¯1 12∘⎕DT) (,∘(4 6))¨ (1+⊢,⊢) 2022 
+
+⍝ Transactions for particular year
+⍴ tr { ((⍺[;1]>⍵[1])∧(⍺[;1]<⍵[2])) ⌿ ⍺ } (¯1 12∘⎕DT) (,∘(4 6))¨ (⊢,(1∘+)) 2022 
+
+⍝ --- Load some candlesticks
+cnd←kload⊢'./data-csv/binance/','ALGO','_USDT-1d.csv'
+
+⍝ --- bring them in a parent namespace for charting
+⎕CS 'Causeway' ⎕NS '' ⋄⎕CY 'sharpplot'   ⍝ copy all classes in a single namespace called "Causeway"
+
+
+'InitCauseway' 'View' ⎕CY 'sharpplot'
+InitCauseway ⍬   ⍝ initialise current namespace
+
+
+sp←⎕NEW Causeway.SharpPlot                        ⍝ default size
+sp.SetPenWidths(0.8,1.2)
+⍝ sp.LineGraphStyle ← Causeway.LineGraphStyles.(TrendLine+OnTopModel)
+
+
+sp←⎕NEW Causeway.SharpPlot                        ⍝ default size
+sp.SetLineStyles(Causeway.LineStyle.(Solid))
+sp.DrawLineGraph((⊂ ↓⍉c[;5 3 4 ]),(⊂c[;1]) )
+sp.SaveSvg(⊂'sample.svg')
+
+⍝ --------------------------------------------------
+
+⍴¨ (ts o h l c v)←↓⍉ 300↑cnd
+⍝ --- up or down
+⍴ud←0,(1-2×4≤1∘↓-¯1∘↓) c
+⍝ --- top or bottom
+⍴  tb←((⊢×) (0, 2=/⊢)) ud
+
+
+⍝ --- Rolling period high/low
+⍴ h_←24 (((¯1+⊣)⍴(1↑⊢)),⊣⌈/⊢) h
+⍴ l_←24 (((¯1+⊣)⍴(1↑⊢)),⊣⌊/⊢) l
+
+
+sp←⎕NEW Causeway.SharpPlot                        ⍝ default size
+sp.SetLineStyles(Causeway.LineStyle.(Solid))
+sp.DrawLineGraph((⊂c h_ l_),⊂ts)
+sp.SaveSvg(⊂'sample.svg')
+
+⍝ 

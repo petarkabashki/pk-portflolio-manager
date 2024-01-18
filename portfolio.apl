@@ -170,7 +170,7 @@ ApplySide ← {(⍵[;1]×⍵[;2]),⍵[;,3],⍵[;1]×⍵[;4]}
 ]display  (⊃ 1⌷⊢ (((⊂2 8 9 10)⌷[2]⊢)¨ dtr),¨ rbags) (⎕CSV⍠'IfExists' 'Replace') 'btc.csv'   
     
 ⍝ --- Calculate rolling bags 
-hbags ← 'bsize' 'bprice' 'btotal' 'pnl'
+⍝ hbags ← 'bsize' 'bprice' 'btotal' 'pnl'
 ⍝ rbags←RollingBag¨ {¯3↑[2]⍵}¨ dtr
 ⍝ pnls← dtr{m←⍺[;6]=-1⋄m×(⍺[;7]-⍵[;2])×⍵[;1]}¨ rbags ⍝ Calculate PNLs
 
@@ -184,31 +184,44 @@ hbags ← 'bsize' 'bprice' 'btotal' 'pnl'
 ⍝ lbags←{⍵[⍋⍵]}lbags[;1]
 ⍝ ]display 5↑ lbags← ((2↑[2]⊢),(((3⌷[2]⊢))÷(2⌷[2]⊢)),(¯3↑[2]⊢) ) ⊢ qtr, ((2∘(↑[2])⊢),(¯3∘(↑[2])⊢))  ⊢⊃⍪/(¯1↑¨rbags) 
 ⍝ --- Save sorted bags to csv
-lbags ('asset' 'size' 'avgPrice' 'total' 'cupnl') (⎕CSV⍠'IfExists' 'Replace') 'latest-bags.csv' 
-]display lbags← {(~⍵[;1]∊'GBP' 'USDT' 'USDC' 'BUSD')⌿⍵ }lbags
-
+hbags ← 'asset' 'size' 'avgPrice' 'total' 'cupnl'
+lbags hbags (⎕CSV⍠'IfExists' 'Replace') 'latest-bags.csv' 
 
 ⍝ --------------------------------------------------------------------
 ⍝ ----------------------  POSITION STATS  ----------------------------
 ⍝ --------------------------------------------------------------------
 
+⍝ --- Load latest bags from file
+hbags ← 'asset' 'size' 'avgPrice' 'total' 'cupnl'
+(lbags hbags)  ← ⎕CSV 'latest-bags.csv' '' (1 2 2 2 2) 1 
+]display hbags⍪lbags
+
 ⍝ --- Load latest prices/quotes
 (dq hq)←⎕CSV'cmc-quotes.csv' '' ⍬ 1 ⍝ load trades
-dq←{⍵[⍋⍵[;2];]}⊢ dq
-]display dq← {(~⍵[;2]∊'GBP' 'USDT' 'USDC' 'BUSD')⌿⍵ }dq
+]display (⊂2 3)⌷[2] ⊢ dq
+⍝ ]display  dq←{⍵[⍋⍵[;2];]}⊢ dq
+⍝ ]display dq← {(~⍵[;2]∊'GBP' 'USDT' 'USDC' 'BUSD')⌿⍵ }dq
 
 ⍝ --- check lists are equivalent 
-dq[;2] ≢¨ {⍵[⍋⍵]}lbags[;1]
+⍝ dq[;2] ≢¨ {⍵[⍋⍵]}lbags[;1]
 
-⍝ --- Current price 
+⍝ --- Current prices 
+⍝ toN← (⍎('-'⎕R'¯')∘('e'⎕R'E')) ⍝ function to convert string to number 
+⍝ cp← ({⍵[;,1]},(toN¨∘(2⌷[2]⊢)))  ((⊂2 3)⌷[2])  dq
+]display cp← {⍵[;,1], (⍎¨∘('-'⎕R'¯')∘('e'⎕R'E')) ⍵[;2]}({ (~⍵[;1]∊('GBP' 'USDT' 'BUSD' 'USDC' 'DAI'))⌿⍵ }) dq[;2 3]
 
-]display  cp← ⍎¨('e-'⎕R 'E¯')¨ ⊢dq[;,3]
-
+⍝ --- Missing prices
+lbags[;1] ~ cp[;1]
+⍝ --- latest prices in the order of lbags; USD equivalents are mapped to 1
+]display lbags[;,1], lbp←(⊂cp[;1] ⍳ lbags[;1])⌷((2⌷[2]⊢) cp⍪('MISSING' 1)) 
+⍝ --- price change relative to average acquisition price
+⎕←pch ← 1-⍨lbp÷lbags[;3]
 ⍝ --- Current portfolio state
-pfstate← cp {pc←¯1+⍺÷ ⍵[;,3]⋄⍵,⍺,pc,(pc×⍵[;,4]),⍺×⍵[;,2] } lbags
+⍝ pfstate← cp {pc←¯1+⍺÷ ⍵[;,3]⋄⍵,⍺,pc,(pc×⍵[;,4]),⍺×⍵[;,2] } lbags
+pfstate←(lbp×lbags[;2]),⍨(pch×lbags[;4]),⍨pch,⍨lbags,lbp
 pfstate (⎕CSV⍠'IfExists' 'Replace') 'portfolio.csv' 
 ⍝ {⍵[;6]} ⊢{(⍵[;1]≢¨⊂'GBP')⌿⍵} ⊢ dq {⍵,⍺[;3]} {⍵[⍋⍵[;1];]} lbags
-
+(({(~⍵[;1]∊('GBP' 'USDT' 'BUSD' 'USDC' 'DAI'))⌿⍵}) pfstate) (⎕CSV⍠'IfExists' 'Replace') 'portfolio.csv' 
 ⍝ --- Export transactions and rolling bags
 ⍝ ( (⊃dtr[1]),(⊃rbags[1]) ) (htr, hbags) (⎕CSV⍠'IfExists' 'Replace') 'tran-bags.csv' 
 
@@ -423,8 +436,9 @@ pntrs hpnltr csvr 'pnl-transactions.csv'
 ⍝ -------------------------------------------
 
 ⍝ -------------------------------------------
-⍝ --- Statistical functions
+⍝ --- Statistical and utility functions
 
+kload ← { (d h) ← ⎕CSV ⍵ '' (2 2 2 2 2 2) 1 ⋄ d}
 sort←((⊂⍋)⌷⊢) 
 ⍝ --- Mean, variance, standard deviation, nth moment 
 mean←(+/÷≢)
@@ -436,10 +450,31 @@ qtl← ((((⌈⊣×(≢⊢))⌷⊢)∘((⊂⍋)⌷⊢))) ⍝ quantlie : 0.3 qtl 
 ⍝ --- Summary statistics
 
 
-⍝ --- Candlestick utilities
-kload ← { (d h) ← ⎕CSV ⍵ '' (2 2 2 2 2 2) 1 ⋄ d}
-
+⍝ -------------
 k←kload⊢'./data-csv/binance/','ALGO','_USDT-4h.csv'
+10↑ lk← ⍟ (⊂2 3 4 5)⌷[2] k ⍝ take log of ohlc
+⍝ --- direction and change of direction 
+dr← ((1,∘×1∘↓-¯1∘↓)∘,¯1↑[2]⊢)  ⍝ direction
+cdr ← (1,1∘↓≠¯1∘↓)  ⍝ change of direction: cdr dr lk
+⍝ --- number of running periods in the same direction
+]display 10↑ ((⊃,/)∘(+\¨)∘(cdr⊂⊢)dr) lk 
+⍝ --- take the positive ones
+]display 10↑ ((/⍨∘(0∘<))⍨) ⊢ ((⊃,/)∘(+\¨)∘(cdr⊂⊢)dr) lk 
+⍝ --- take the negative ones
+]display 20↑ ((/⍨∘(0∘>))⍨) ⊢ ((⊃,/)∘(+\¨)∘(cdr⊂⊢)dr) lk 
+
+⍝ --- quantiles for number of negative periods
+]display  (st stt)←0.9 500⋄pct←(st+ (1-st)÷⌽⍳stt)⋄⍉↑(⊂pct),⊂ pct qtl¨ ⊂ | ((/⍨∘(0∘>))⍨) ⊢ ((⊃,/)∘(+\¨)∘(cdr⊂⊢)dr) lk 
+
+⍝ --- negative periods
+nk←|((/⍨∘(0∘>))⍨) ⊢ ((⊃,/)∘(+\¨)∘(cdr⊂⊢)dr) lk 
+]display  r← ({⍺ (≢⍵)}⌸) nk
+⍝ --- percentages for number of consecutive falling candles 
+⍝ ]display ((⊂∘⍋∘,1↑[2]⊢)⌷⊢) r[;,1], r[;2] ÷ +/r[;2]
+⍝ ]display   {⍵[;,1],((⊢÷(+/⊢))(,¯1↑[2]⊢))⍵} r
+]display   {⍵[;1],6 4⍕((+⍀)∘(⊢÷(+⌿⊢)))((¯1↑[2]⊢))⍵} r
+
+⍝ ]display 10↑ (+\¨∘(cdr⊂⊢)dr) lk 
 
 ⍝ --- number of days in the same direction
 

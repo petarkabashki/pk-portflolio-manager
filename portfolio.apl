@@ -13,8 +13,11 @@ hh ← 'time' 'exch' 'pair' 'id' 'side' 'base' 'quote' 'size' 'price' 'total'
 
 ⍝ --------------------------------------------
 ⍝ PHEMEX
-(d h)  ← ⎕CSV 'trading-data/phemex/SPOT_TRADE_2023.csv' '' ⍬ 1
-(⍳≢h),[0.5]h ⍝ header
+⍝ (d h)  ← ⎕CSV 'trading-data/phemex/SPOT_TRADE_2023.csv' '' ⍬ 1
+fd←(⊂'trading-data/phemex/'),¨ ('SPOT_TRADE_2023' 'SPOT_TRADE_2024-interim') ,¨⊂'.csv'
+d← ⊃⍪/{⊃1↑⎕CSV ⍵ '' ⍬ 1}¨ fd ⍝ load data from csvs
+
+⍝ (⍳≢h),[0.5]h ⍝ header
 d[;3]←('SELL' 'BUY')[1+(≡∘'Buy')¨d[;3]] ⍝ Massage Buy/Sell
 ∪ q←{qb[⍵]}⍸¨↓d[;2]∘.{⍵≡(-≢⍵)↑⍺} qb ⍝ Extract quote
 ∪ b←q{(-3+≢⍺)↓⍵}¨d[;2] ⍝ Extract base
@@ -188,7 +191,7 @@ hbags ← 'asset' 'size' 'avgPrice' 'total' 'cupnl'
 lbags hbags (⎕CSV⍠'IfExists' 'Replace') 'latest-bags.csv' 
 
 ⍝ --------------------------------------------------------------------
-⍝ ----------------------  POSITION STATS  ----------------------------
+⍝ ----------------------  PORTFOLIO STATS  ----------------------------
 ⍝ --------------------------------------------------------------------
 
 ⍝ --- Load latest bags from file

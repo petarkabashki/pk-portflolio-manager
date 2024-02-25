@@ -9,4 +9,4 @@ xchconf.json
 .~lock.*
 *.svg
 aplcore
-trading-data
+trading-data/*

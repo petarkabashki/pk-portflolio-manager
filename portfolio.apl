@@ -43,7 +43,7 @@ dbtg←d[;1],(⊂'bitget'),p,'-',d[;4],b,q,d[;7 8],×/d[;7 8]
 ⍝ --------------------------------------------
 ⍝ BINANCE
 ⍝ ---Load all binance files at once
-fd←(⊂'trading-data/binance/OrderHistory/'),¨ ('2020-with-time' '2021' '2022' '2023') ,¨⊂'.csv'
+fd←(⊂'trading-data/binance/OrderHistory/'),¨ ('2020-with-time' '2021' '2022' '2023' '2024-02-22 19_27_28') ,¨⊂'.csv'
 d← ⊃⍪/{⊃1↑⎕CSV ⍵ '' ⍬ 1}¨ fd ⍝ load data from csvs
 d←(~d[;12]∊ ⊢'CANCELED' 'EXPIRED') /[1] d ⍝ -- remove canceled
 
@@ -91,7 +91,7 @@ side_inv←{('SELL' 'BUY')[1+⍵ ∊⊂'SELL']}⍝ function to invert BUY/SELL t
 ⍝ ---  load BTC/USDT and ETH/USDT and fill missing values
 ⍝ 
 qhi←'BTC' 'ETH' 'GBP'
-dhi←⌷fill_missing¨{⍵[;1] ,[1.5]  4÷⍨ +/ ⍵[;2 3 4 5]}¨{kload⊢'./data-csv/',⍵,'_USDT-1m.csv' }¨qhi
+dhi←⌷fill_missing¨{⍵[;1] ,[1.5]  4÷⍨ +/ ⍵[;2 3 4 5]}¨{kload⊢'./',⍵,'_USDT-1m.csv' }¨qhi
 
 
 ⍝ --------------------------------------------------------------------------------
@@ -225,6 +225,7 @@ pfstate←(lbp×lbags[;2]),⍨(pch×lbags[;4]),⍨pch,⍨lbags,lbp
 pfstate (⎕CSV⍠'IfExists' 'Replace') 'portfolio.csv' 
 ⍝ {⍵[;6]} ⊢{(⍵[;1]≢¨⊂'GBP')⌿⍵} ⊢ dq {⍵,⍺[;3]} {⍵[⍋⍵[;1];]} lbags
 (({(~⍵[;1]∊('GBP' 'USDT' 'BUSD' 'USDC' 'DAI'))⌿⍵}) pfstate) (⎕CSV⍠'IfExists' 'Replace') 'portfolio.csv' 
+(({(~⍵[;1]∊('GBP' 'USDT' 'BUSD' 'USDC' 'DAI' 'BTC' 'GRT' 'ADA' 'ALGO' 'ETH' 'ATOM'))⌿⍵}) pfstate) (⎕CSV⍠'IfExists' 'Replace') 'portfolio-2024.csv' 
 ⍝ --- Export transactions and rolling bags
 ⍝ ( (⊃dtr[1]),(⊃rbags[1]) ) (htr, hbags) (⎕CSV⍠'IfExists' 'Replace') 'tran-bags.csv' 
 

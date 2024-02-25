@@ -8,3 +8,5 @@ temp/
 xchconf.json
 .~lock.*
 *.svg
+aplcore
+trading-data

@@ -35,6 +35,6 @@ pfstate←(lbp×lbags[;2]),⍨(pch×lbags[;4]),⍨pch,⍨lbags,lbp
 pfstate (⎕CSV⍠'IfExists' 'Replace') 'portfolio.csv' 
 ⍝ {⍵[;6]} ⊢{(⍵[;1]≢¨⊂'GBP')⌿⍵} ⊢ dq {⍵,⍺[;3]} {⍵[⍋⍵[;1];]} lbags
 (({(~⍵[;1]∊('GBP' 'USDT' 'BUSD' 'USDC' 'DAI'))⌿⍵}) pfstate) (⎕CSV⍠'IfExists' 'Replace') 'portfolio.csv' 
-(({(~⍵[;1]∊('GBP' 'USDT' 'BUSD' 'USDC' 'DAI' 'BTC' 'GRT' 'ADA' 'ALGO' 'ETH' 'ATOM' 'BNB'))⌿⍵}) pfstate) (⎕CSV⍠'IfExists' 'Replace') 'portfolio-2024.csv' 
+(({(~⍵[;1]∊('GBP' 'USDT' 'BUSD' 'USDC' 'DAI' 'BTC' 'GRT' 'ADA' 'ALGO' 'ETH' 'ATOM' 'BNB' 'CAKE' 'LUNA' 'THETA' 'AAVE' 'LRC' 'FTM' 'TRX' 'ZIL' 'LTC' 'KSM' 'XRP' 'XLM' 'ENJ' 'DOGE' 'LINK' 'CRV' 'ICP'))⌿⍵}) pfstate) (⎕CSV⍠'IfExists' 'Replace') 'portfolio-2024.csv' 
 ⍝ --- Export transactions and rolling bags
 ⍝ ( (⊃dtr[1]),(⊃rbags[1]) ) (htr, hbags) (⎕CSV⍠'IfExists' 'Replace') 'tran-bags.csv' 

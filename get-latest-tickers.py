@@ -1,10 +1,10 @@
-#!/home/grenada/miniconda3/envs/py310/bin/python
+#!python
 
 ##############################################################
 ### Gets the latest prices for selected pairs from coinmarketcap
 #########################
 #%%
-import IPython
+# import IPython
 import pandas as pd
 import numpy as np
 

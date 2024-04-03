@@ -18,20 +18,7 @@ PhemexTra← { 𝕤
 	xprice←•ParseFloat¨ 4⊏˘data
 	received‿receivedU ←((•ParseFloat¨∘⊏)⋈(1⊸⊏)) ⍉>" "⊸StrSplit¨ 3⊏˘data
 	spent‿spentU ←((•ParseFloat¨∘⊏)⋈(1⊸⊏)) ⍉>" "⊸StrSplit¨ 5⊏˘data
-#	amount‿amountAss ←((•ParseFloat¨∘⊏)⋈(1⊸⊏)) ⍉>" "⊸StrSplit¨ 6⊏˘data
-#	amrecQ
-#	amspeQ
-#	7 ↑ ⍉amrecQ ≍ amspeQ
-#	 idxbuy ← (iside ≡¨ 1)
-#	 qty← (1-idxbuy) ⊑¨ <˘⍉amrecQ ≍ amspeQ
-#	 total← (idxbuy) ⊑¨ <˘⍉amrecQ ≍ amspeQ
-	#10↑ (<˘⍉>(⊢⋈(1⊸-)) (iside ≢¨ ¯1)) ⊏¨ <⍉amrecQ ≍ amspeQ
 	fee‿feeU ←((•ParseFloat¨∘⊏)⋈(1⊸⊏)) ⍉>" "⊸StrSplit¨ 9⊏˘data
-	# checks
-	#+´(xprice ⋆ iside) - amspeQ ÷ amrecQ
-	#+´ (iside = 1) ∧ (amrecA ≢¨ base) ∨ (amspeA ≢¨ quote)
-	#+´ (iside = ¯1) ∧ (amspeA ≢¨ base) ∨ (amrecA ≢¨ quote)
-	#("ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent"‿"fee"‿"feeUnit") ∾ ⍉[(⊏˘ data), iside, base, quote, received, spent, fee, feeU]
 	("exchange"‿"ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent"‿"fee"‿"feeUnit") ∾ (<"phemex") ∾˘ ⍉[tscol, iside, base, quote, received, spent, fee, feeU]
 }
 
@@ -80,35 +67,23 @@ PhemexTra 0
 BinanceTra← { 𝕤
 	files←(<"../trading-data/binance/SpotOrder/") ∾¨ "2023"‿"2022"‿"2021"‿"2020" ∾¨ (<".csv")
 	data← >∾´(1⊸↓ >CsvSplitL  •FLines)¨  files
-
 	side← ToUpper¨ 2⊏˘data
 	iside← ¯1+ 2×side ≡¨ (<"BUY")
 	qassets←"BTC"‿"USDT"‿"BUSD"‿"GBP"‿"USDC"‿"UST"‿"DAI"‿"ETH"
-	#qassets ∾ ⍉ qassets (+´∘/∘⍷)⌜ 10↑ 2 ⊏˘ data
-	#10↑ data
 	pairs ← 1 ⊏˘ data
 	tqpos← ⍉ qassets (+´∘/∘(¯1⊸⊑ × ⊢)∘⍷)⌜ pairs
 	qpos ← ⌈˝˘ tqpos 
-	#	≢data 
-	#(/qpos ≡¨0)
-	#(/qpos ≡¨0) ⊏ data
 	quote← ⥊((/⟜qassets)˘(0⊸≢)¨) tqpos 
 	base ← qpos	↑¨ pairs
 	tscol ← ⊏˘data
 	execcol ← 4⊏˘data
 	amountcol ← 5⊏˘data
 	feecol ← 6⊏˘data
-	#price ← •ParseFloat¨ 3⊏˘data
 	# Check base is always in the "Executed" column
 	+´(1⊸≢∘¯1⊸⊑)¨ base ⍷¨ execcol
 	# Check quote is always in the "Trading total" column
 	+´(1⊸≢∘¯1⊸⊑)¨ quote ⍷¨ amountcol
-
-	#feeUnit←(iside≢¨1) ⊑¨ <˘⍉base≍quote
-	#feeQ‿feeUnit ← { pos← (⊑/)¨ 𝕩 ∊¨ <('A'+↕'Z'-'A')⋄ <˘⍉> pos (↑⋈↓)¨𝕩} ( 6 ⊏ ⍉ (1⊸≢¨ ¯1⊸⊑¨ feeUnit ⍷¨ feecol) / data) 
 	fee‿feeU← { pos← (⊑/)¨ 𝕩 ∊¨ <('A'+↕1+'Z'-'A')⋄ ⟨•ParseFloat¨, ⊢⟩ {𝕎  𝕩}¨<˘⍉>  pos (↑⋈↓)¨𝕩} feecol
-	# (feeUnit ≢¨ feeUnit) / ⍉feeUnit≍feeUnit 
-	#feeUnit∾iside∾base≍quote
 	amount ← •ParseFloat¨ (-≠¨quote) ↓¨ amountcol
 	executed ← •ParseFloat¨ (-qpos) ↓¨ execcol
 	iside ∾ executed ≍ amount
@@ -116,8 +91,6 @@ BinanceTra← { 𝕤
 	### Include fee in qty / total for buy / sell
 	total ← amount - fee × iside ≡¨ ¯1 
 	qty ← executed - fee × iside ≡¨ 1 
-	#	+´avgprice - total ÷ executed + 1e¯18
-	#	+´0≢¨executed
 	########################
 	### Fee is not included in the total, needs to be subtracted from the received amount or applied otherwise
 	("exchange"‿"ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent"‿"fee"‿"feeUnit") ∾ (<"binance") ∾˘ ⍉[tscol, iside, base, quote, received, spent, fee, feeU]
@@ -150,11 +123,6 @@ CoinbaseProTra← { 𝕤
 	spent ← indSpent ⊑¨ size_tot
 	fee ← •ParseFloat¨ 8⊏˘data
 	feeU ← totalU
-	# checks
-	#+´(xprice ⋆ iside) - amspeQ ÷ amrecQ
-	#+´ (iside = 1) ∧ (amrecA ≢¨ base) ∨ (amspeA ≢¨ quote)
-	#+´ (iside = ¯1) ∧ (amspeA ≢¨ base) ∨ (amrecA ≢¨ quote)
-	#("ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent"‿"fee"‿"feeUnit") ∾ ⍉[(⊏˘ data), iside, base, quote, received, spent, fee, feeU]
 	("exchange"‿"ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent"‿"fee"‿"feeUnit") ∾ (<"coinbase-pro") ∾˘ ⍉[tscol, iside, base, quote, received, spent, fee, feeU]
 }
 #CoinbaseProTra 0 
@@ -188,16 +156,12 @@ KucoinTra← { 𝕤
 #  BitGet
 BitgetTra← { 𝕤
 	files←(<"../trading-data/bitget/Spot Order History-") ∾¨ ("2023"‿"2024-prelim") ∾¨ (<".csv")
-	#data← ((0⊸≢∘•ParseFloat)¨∘(6⊸⊏˘) / ⊢ ) >∾´(1⊸↓ >CsvSplitL  •FLines)¨  files
 	# filter out cancelled
 	data← (((<"cancelled")≢¨8⊸⊏˘) / ⊢) >∾´(1⊸↓ >CsvSplitL  •FLines)¨  files
-	#data1← 8⊏˘ >∾´(1⊸↓ >CsvSplitL  •FLines)¨  files
 	tscol ← 0⊏˘ data
 	side← ToUpper¨ 3⊏˘data
 	iside← ¯1+ 2×side ≡¨ (<"BUY")
 	qassets←"BTC"‿"USDT"‿"BUSD"‿"GBP"‿"USDC"‿"UST"‿"DAI"‿"ETH"
-	#qassets ∾ ⍉ qassets (+´∘/∘⍷)⌜ 10↑ 2 ⊏˘ data
-	#10↑ data
 	pairs ← ¯5↓¨2 ⊏˘ data
 	tqpos← ⍉ qassets (+´∘/∘(¯1⊸⊑ × ⊢)∘⍷)⌜ pairs
 	qpos ← ⌈˝˘ tqpos 
@@ -214,34 +178,34 @@ BitgetTra← { 𝕤
 	("exchange"‿"ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent"‿"fee"‿"feeUnit") ∾ (<"bitget") ∾˘ ⍉[tscol, iside, base, quote, received, spent, fee, feeU]
 }
 BitgetTra 0 
+# TODO: add Kraken
 #############################################
 #  Kraken
+#############################################
 
-1 RowNu ⍉ qassets ∾˘ ((0⊸≢))¨ qassets (+´∘/∘(¯1⊸⊑ × ⊢)∘⍷)⌜ 10↑ 2 ⊏˘ data
- ⍉ <˘⍉((0⊸≢))¨ qassets (+´∘/∘(¯1⊸⊑ × ⊢)∘⍷)⌜ 10↑ 2 ⊏˘ data
-(¯1⊸⊑ × ⊢) ⟨0,0,0,1,0⟩
-0 RowNu ⍉ 	qassets (⍷)⌜ 10↑ 2 ⊏˘ data
-	5 ⊏data
-	base‿quote ← <˘⍉> " / "⊸StrSplit¨ 1⊏˘data
-	xprice←•ParseFloat¨ 4⊏˘data
-	amrecQ‿amrecA ←((•ParseFloat¨∘⊏)⋈(1⊸⊏)) ⍉>" "⊸StrSplit¨ 3⊏˘data
-	amspeQ‿amspeA ←((•ParseFloat¨∘⊏)⋈(1⊸⊏)) ⍉>" "⊸StrSplit¨ 5⊏˘data
-	amQ‿amA ←((•ParseFloat¨∘⊏)⋈(1⊸⊏)) ⍉>" "⊸StrSplit¨ 6⊏˘data
-	#feeQ‿feeU ←((•ParseFloat¨∘⊏)⋈(1⊸⊏)) ⍉>" "⊸StrSplit¨ 9⊏˘data
-	# checks
-	#+´(xprice ⋆ iside) - amspeQ ÷ amrecQ
-	#+´ (iside = 1) ∧ (amrecA ≢¨ base) ∨ (amspeA ≢¨ quote)
-	#+´ (iside = ¯1) ∧ (amspeA ≢¨ base) ∨ (amrecA ≢¨ quote)
-	("ts"‿"iside"‿"base"‿"quote"‿"amrec"‿"amspe") ∾ ⍉[(⊏˘ data), iside, base, quote, amrecQ, amspeQ]
-}
+#############################################
+### Consolidate all trades
 
-#PhemTra 0 
 
-b
+10↑ trans← ∾´ BinanceTra‿PhemexTra‿KucoinTra‿CoinbaseProTra‿BitgetTra { 1↓ 𝕎 𝕩}¨ <0
+# unique feeUnits that are not base or quote
+feeBaseQuote ← (⊑¨(<¨8⊏˘trans) ∊¨ <˘⍉3‿4 ⊏ ⍉trans )
+⍷ (¬feeBaseQuote) / 8⊏˘trans
+receivedNet ← (5 ⊏˘ trans) - feeBaseQuote ×¨ 7⊏˘trans
+5↑ transNet ← (5↑˘ trans) ∾˘ receivedNet ∾˘ 6⊏˘ trans
+# Calculate totals by asset
+5↑ inFlows ← (2↑˘ trans) ∾˘ 1 ∾˘ ((1≡2⊏˘transNet) ⊑¨ <˘⍉3‿4 ⊏ ⍉transNet) ∾˘ 5⊏˘transNet
+5↑ outFlows ← (2↑˘ trans) ∾˘ ¯1 ∾˘ ((1≢2⊏˘transNet) ⊑¨ <˘⍉3‿4 ⊏ ⍉transNet) ∾˘ 6⊏˘transNet
+¯5↑ inOutFlows ← inFlows ∾ outFlows
+≢inOutFlows
+assets ← ⍷ 3⊏˘ inOutFlows 
+¯3↑>2↑¨ aflows ← (⊐(3⊸⊏)˘)⊸⊔ inOutFlows 
+×´¨<˘2‿3⥊↕10
+¯3↑ finalAmounts ← ( +´ (×´¨ <˘))¨ (2‿4⊸⊏˘)¨ aflows 
+(⍋assets) ⊏ assets ∾˘ finalAmounts
 
-fd←  ⍉≍⌽ ≠¨ Split •FChars ⊑ ph_files
-fd←  ⍉≍ (1⊸↓-¯1⊸↓) ≠¨ Split •FChars ⊑ ph_files
+(<¯2⊸↑)˘ transNet
 
-←>JParse •FChars dfld∾"ALGO_USDT-8h.json" 
-3 + 3
+
+
 

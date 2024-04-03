@@ -4,9 +4,10 @@
 ⟨StrSplit⇐Split⟩←•Import "bqn-libs/strings.bqn"
 ToUpper ← -⟜(32×1="a{"⊸⍋)
 RowNu ← { ((↕≠𝕩)-𝕨) ∾˘ 𝕩}
+SplitNum ←•Parsefloat‿⊢{𝕎 𝕩}¨(("-."∾'0' + ↕10) (((⊢⋈¬)∘∊˜)/¨(<⊢)) ⊢)
 ##########################################
 # Phemex
-# TODO: Include fees in qty / total and add fee/feeUnit columns
+# TODO: Incorporate fees in received/spent if appropriate
 
 PhemexTra← { 𝕤
 	files←(<"../trading-data/phemex/") ∾¨ "SPOT_TRADE_2023"‿"SPOT_TRADE_2024-interim" ∾¨ (<".csv")
@@ -18,11 +19,11 @@ PhemexTra← { 𝕤
 	xprice←•ParseFloat¨ 4⊏˘data
 	received‿receivedU ←((•ParseFloat¨∘⊏)⋈(1⊸⊏)) ⍉>" "⊸StrSplit¨ 3⊏˘data
 	spent‿spentU ←((•ParseFloat¨∘⊏)⋈(1⊸⊏)) ⍉>" "⊸StrSplit¨ 5⊏˘data
-	fee‿feeU ←((•ParseFloat¨∘⊏)⋈(1⊸⊏)) ⍉>" "⊸StrSplit¨ 9⊏˘data
-	("exchange"‿"ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent"‿"fee"‿"feeUnit") ∾ (<"phemex") ∾˘ ⍉[tscol, iside, base, quote, received, spent, fee, feeU]
+	#fee‿feeU ←((•ParseFloat¨∘⊏)⋈(1⊸⊏)) ⍉>" "⊸StrSplit¨ 9⊏˘data
+	("exchange"‿"ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent") ∾ (<"phemex") ∾˘ ⍉[tscol, iside, base, quote, received, spent]
 }
 
-PhemexTra 0 
+#5↑PhemexTra 0 
 
 
 ##########################################
@@ -64,6 +65,7 @@ PhemexTra 0
 #	("ts"‿"iside"‿"base"‿"quote"‿"qty"‿"total") ∾ (executed ≢¨1) / ⍉[(7⊏˘ data), iside, base, quote, executed, total]
 #}
 
+
 BinanceTra← { 𝕤
 	files←(<"../trading-data/binance/SpotOrder/") ∾¨ "2023"‿"2022"‿"2021"‿"2020" ∾¨ (<".csv")
 	data← >∾´(1⊸↓ >CsvSplitL  •FLines)¨  files
@@ -76,24 +78,21 @@ BinanceTra← { 𝕤
 	quote← ⥊((/⟜qassets)˘(0⊸≢)¨) tqpos 
 	base ← qpos	↑¨ pairs
 	tscol ← ⊏˘data
-	execcol ← 4⊏˘data
-	amountcol ← 5⊏˘data
-	feecol ← 6⊏˘data
-	# Check base is always in the "Executed" column
-	+´(1⊸≢∘¯1⊸⊑)¨ base ⍷¨ execcol
+	exec‿execU ← <˘⍉>SplitNum¨ 4⊏˘data
+	amount‿amountU ← <˘⍉>SplitNum¨ 5⊏˘data
+	fee‿feeU ← <˘⍉>SplitNum¨ 6⊏˘data
+	# Check base unit == executed unit
+	+´base ≢¨ execU
 	# Check quote is always in the "Trading total" column
-	+´(1⊸≢∘¯1⊸⊑)¨ quote ⍷¨ amountcol
-	fee‿feeU← { pos← (⊑/)¨ 𝕩 ∊¨ <('A'+↕1+'Z'-'A')⋄ ⟨•ParseFloat¨, ⊢⟩ {𝕎  𝕩}¨<˘⍉>  pos (↑⋈↓)¨𝕩} feecol
-	amount ← •ParseFloat¨ (-≠¨quote) ↓¨ amountcol
-	executed ← •ParseFloat¨ (-qpos) ↓¨ execcol
-	iside ∾ executed ≍ amount
-	received‿spent ← <˘⍉>(iside≢¨1) ⌽¨ <˘⍉ executed ≍ amount
+	+´quote ≢¨ amountU
+	#iside ∾ exec ≍ amount
+	received‿spent ← <˘⍉>(iside≢¨1) ⌽¨ <˘⍉ exec ≍ amount
 	### Include fee in qty / total for buy / sell
-	total ← amount - fee × iside ≡¨ ¯1 
-	qty ← executed - fee × iside ≡¨ 1 
+	#total ← amount - fee × iside ≡¨ ¯1 
+	#qty ← executed - fee × iside ≡¨ 1 
 	########################
 	### Fee is not included in the total, needs to be subtracted from the received amount or applied otherwise
-	("exchange"‿"ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent"‿"fee"‿"feeUnit") ∾ (<"binance") ∾˘ ⍉[tscol, iside, base, quote, received, spent, fee, feeU]
+	("exchange"‿"ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent") ∾ (<"binance") ∾˘ ⍉[tscol, iside, base, quote, received, spent]
 }
 #5↑BinanceTra 0
 
@@ -101,7 +100,7 @@ BinanceTra← { 𝕤
 #  Coinbase
 CoinbaseProTra← { 𝕤
 	files←(<"../trading-data/coinbase-pro/") ∾¨ ⥊ (<"fills-2023-12-22") ∾¨ (<".csv")
-	data← >∾´(1⊸↓ >CsvSplitL  •FLines)¨  files
+	data← ((⍋4⊸⊏˘)⊏⊢) >∾´(1⊸↓ >CsvSplitL  •FLines)¨  files
 	tscol ← 4⊏˘ data
 	side← ToUpper¨ 3⊏˘data
 	iside← ¯1+ 2×side ≡¨ (<"BUY")
@@ -121,11 +120,13 @@ CoinbaseProTra← { 𝕤
 	size_tot ← <˘⍉ size ≍ calcTotal 	
 	received ← indReceived ⊑¨ size_tot 
 	spent ← indSpent ⊑¨ size_tot
-	fee ← •ParseFloat¨ 8⊏˘data
-	feeU ← totalU
-	("exchange"‿"ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent"‿"fee"‿"feeUnit") ∾ (<"coinbase-pro") ∾˘ ⍉[tscol, iside, base, quote, received, spent, fee, feeU]
+	#fee ← •ParseFloat¨ 8⊏˘data
+	#feeU ← totalU
+	# check feeU == quote
+	+´ totalU ≢¨ quote
+	("exchange"‿"ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent") ∾ (<"coinbase-pro") ∾˘ ⍉[tscol, iside, base, quote, received, spent]
 }
-¯50↑ CoinbaseProTra 0 
+30↓CoinbaseProTra 0 
 
 #############################################
 #  Kucoin
@@ -136,10 +137,10 @@ KucoinTra← { 𝕤
 	side← ToUpper¨ 4⊏˘data
 	iside← ¯1+ 2×side ≡¨ (<"BUY")
 	base‿quote ← <˘⍉> "-"⊸StrSplit¨ 3⊏˘data
-	fee ← •ParseFloat¨ 11⊏˘data
-	feeU← ToUpper¨ 13⊏˘data
+	#fee ← •ParseFloat¨ 11⊏˘data
+	#feeU← ToUpper¨ 13⊏˘data
 	# check fee unit is always the quote
-	+´feeU ≢¨ quote
+	#+´feeU ≢¨ quote
 
 	price←•parsefloat¨ 6⊏˘data
 	amount←•parsefloat¨ 7⊏˘data
@@ -147,10 +148,10 @@ KucoinTra← { 𝕤
 	# check volume = price × amount
 	1e¯6 < +´ | volume - price × amount
   #iside ∾ amount ≍ volume
-	received‿spent ← <˘⍉>(iside ≡¨ 1) ⌽¨ amount (<∘≍)˘ volume
-	("exchange"‿"ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent"‿"fee"‿"feeUnit") ∾ (<"kucoin") ∾˘ ⍉[tscol, iside, base, quote, received, spent, fee, feeU]
+	received‿spent ← <˘⍉>(iside ≢¨ 1) ⌽¨ amount (<∘≍)˘ volume
+	35↓("exchange"‿"ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent") ∾ (<"kucoin") ∾˘ ⍉[tscol, iside, base, quote, received, spent]
 }
-#KucoinTra 0 
+#5↑ KucoinTra 0 
 
 #############################################
 #  BitGet
@@ -173,11 +174,11 @@ BitgetTra← { 𝕤
 	iside∾⍉> executed (<∘≍)˘ calcTotal
 	received‿spent ← <˘⍉>(iside ≢¨ 1) ⌽¨ executed (<∘≍)˘ calcTotal
 	# apply 0.1% manually
-	fee ← 0.001 × received
-	feeU ← (iside ≢¨ 1) ⊑¨ base (<∘≍)˘ quote
-	("exchange"‿"ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent"‿"fee"‿"feeUnit") ∾ (<"bitget") ∾˘ ⍉[tscol, iside, base, quote, received, spent, fee, feeU]
+	#fee ← 0.001 × received
+	#feeU ← (iside ≢¨ 1) ⊑¨ base (<∘≍)˘ quote
+	("exchange"‿"ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent") ∾ (<"bitget") ∾˘ ⍉[tscol, iside, base, quote, received, spent]
 }
-BitgetTra 0 
+#5↑ BitgetTra 0 
 # TODO: add Kraken
 #############################################
 #  Kraken
@@ -187,29 +188,26 @@ BitgetTra 0
 ### Consolidate all trades
 
 
-¯10↑ trans← (⊏˘ ∾˘ ((10⊸↑⊸∾⟜" "⊸∾⟜(8⊸↑ 11⊸↓))¨ 1⊸⊏˘) ∾˘ 2⊸↓˘) ∾´ BinanceTra‿PhemexTra‿KucoinTra‿BitgetTra‿CoinbaseProTra { 1↓ 𝕎 𝕩}¨ <0
-# unique feeUnits that are not base or quote
-feeBaseQuote ← (⊑¨(<¨8⊏˘trans) ∊¨ <˘⍉3‿4 ⊏ ⍉trans )
-⍷ (¬feeBaseQuote) / 8⊏˘trans
-receivedNet ← (5 ⊏˘ trans) - feeBaseQuote ×¨ 7⊏˘trans
-¯5↑ transNet ← (5↑˘ trans) ∾˘ receivedNet ∾˘ 6⊏˘ trans
+15↑ trans←  ((⍋1⊸⊏˘)⊏⊢) (⊏˘ ∾˘ ((10⊸↑⊸∾⟜" "⊸∾⟜(8⊸↑ 11⊸↓))¨ 1⊸⊏˘) ∾˘ 2⊸↓˘) ∾´ BinanceTra‿PhemexTra‿KucoinTra‿BitgetTra‿CoinbaseProTra { 1↓ 𝕎 𝕩}¨ <0
 # Calculate totals by asset
-5↑ inFlows ← (2↑˘ trans) ∾˘ 1 ∾˘ ((1≡2⊏˘transNet) ⊑¨ <˘⍉3‿4 ⊏ ⍉transNet) ∾˘ 5⊏˘transNet
-5↑ outFlows ← (2↑˘ trans) ∾˘ ¯1 ∾˘ ((1≢2⊏˘transNet) ⊑¨ <˘⍉3‿4 ⊏ ⍉transNet) ∾˘ 6⊏˘transNet
-¯5↑ inOutFlows ← inFlows ∾ outFlows
+15↑ inFlows ← (2↑˘ trans) ∾˘ 1 ∾˘ ((1≢¨2⊏˘trans) ⊑¨ <˘⍉3‿4 ⊏ ⍉trans) ∾˘ 5⊏˘trans
+15↑ outFlows ← (2↑˘ trans) ∾˘ ¯1 ∾˘ ((1≡¨2⊏˘trans) ⊑¨ <˘⍉3‿4 ⊏ ⍉trans) ∾˘ -6⊏˘trans
+15↑ inOutFlows ← inFlows ∾ outFlows
 ≢inOutFlows
-¯3↑ assetsH ← ⍷ 3⊏˘ inOutFlows 
+3↑ assetsH ← ⍷ 3⊏˘ inOutFlows 
 iassets ← ⍋assetsH
 assets ← iassets ⊏ assetsH
-10↑ 12⊑ aflows ←  ((⍋1⊸⊏˘)⊏⊢)¨ iassets ⊏ (⊐(3⊸⊏)˘)⊸⊔ inOutFlows 
->3↑ 13↑¨ sigFlows ← ( (×´¨ <˘))¨ (2‿4⊸⊏˘)¨ aflows 
-13↑ finalAmounts ← +´¨ sigFlows 
->3↑ 9↑¨ cumFlows ←  +`¨ sigFlows 
- 12⊑ aflows ∾˘¨ cumFlows
 assets (⊑⊒) <"BTC"
+10↑ 12⊑ aflows ←  ((⍋1⊸⊏˘)⊏⊢)¨ iassets ⊏ (⊐(3⊸⊏)˘)⊸⊔ inOutFlows 
+200↑ 10600↓ 12⊑ (∾˘⟜(+`¯1⊸⊏˘))¨ aflows
+#>3↑ 13↑¨ sigFlows ← ( (×´¨ <˘))¨ (2‿4⊸⊏˘)¨ aflows 
+#1⊸⊏¨aflows
+13↑ finalAmounts ← (+´ ¯1⊸⊏˘) ¨ aflows 
+#>3↑ 9↑¨ cumFlows ←  +`¨ sigFlows 
+# 12⊑ aflows ∾˘¨ cumFlows
  assets ∾˘ finalAmounts
 
-(<¯2⊸↑)˘ transNet
+(<¯2⊸↑)˘ trans
 
 
 

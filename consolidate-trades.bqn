@@ -125,7 +125,7 @@ CoinbaseProTra← { 𝕤
 	feeU ← totalU
 	("exchange"‿"ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent"‿"fee"‿"feeUnit") ∾ (<"coinbase-pro") ∾˘ ⍉[tscol, iside, base, quote, received, spent, fee, feeU]
 }
-#CoinbaseProTra 0 
+¯50↑ CoinbaseProTra 0 
 
 #############################################
 #  Kucoin
@@ -187,22 +187,27 @@ BitgetTra 0
 ### Consolidate all trades
 
 
-10↑ trans← ∾´ BinanceTra‿PhemexTra‿KucoinTra‿CoinbaseProTra‿BitgetTra { 1↓ 𝕎 𝕩}¨ <0
+¯10↑ trans← (⊏˘ ∾˘ ((10⊸↑⊸∾⟜" "⊸∾⟜(8⊸↑ 11⊸↓))¨ 1⊸⊏˘) ∾˘ 2⊸↓˘) ∾´ BinanceTra‿PhemexTra‿KucoinTra‿BitgetTra‿CoinbaseProTra { 1↓ 𝕎 𝕩}¨ <0
 # unique feeUnits that are not base or quote
 feeBaseQuote ← (⊑¨(<¨8⊏˘trans) ∊¨ <˘⍉3‿4 ⊏ ⍉trans )
 ⍷ (¬feeBaseQuote) / 8⊏˘trans
 receivedNet ← (5 ⊏˘ trans) - feeBaseQuote ×¨ 7⊏˘trans
-5↑ transNet ← (5↑˘ trans) ∾˘ receivedNet ∾˘ 6⊏˘ trans
+¯5↑ transNet ← (5↑˘ trans) ∾˘ receivedNet ∾˘ 6⊏˘ trans
 # Calculate totals by asset
 5↑ inFlows ← (2↑˘ trans) ∾˘ 1 ∾˘ ((1≡2⊏˘transNet) ⊑¨ <˘⍉3‿4 ⊏ ⍉transNet) ∾˘ 5⊏˘transNet
 5↑ outFlows ← (2↑˘ trans) ∾˘ ¯1 ∾˘ ((1≢2⊏˘transNet) ⊑¨ <˘⍉3‿4 ⊏ ⍉transNet) ∾˘ 6⊏˘transNet
 ¯5↑ inOutFlows ← inFlows ∾ outFlows
 ≢inOutFlows
-assets ← ⍷ 3⊏˘ inOutFlows 
-¯3↑>2↑¨ aflows ← (⊐(3⊸⊏)˘)⊸⊔ inOutFlows 
-×´¨<˘2‿3⥊↕10
-¯3↑ finalAmounts ← ( +´ (×´¨ <˘))¨ (2‿4⊸⊏˘)¨ aflows 
-(⍋assets) ⊏ assets ∾˘ finalAmounts
+¯3↑ assetsH ← ⍷ 3⊏˘ inOutFlows 
+iassets ← ⍋assetsH
+assets ← iassets ⊏ assetsH
+10↑ 12⊑ aflows ←  ((⍋1⊸⊏˘)⊏⊢)¨ iassets ⊏ (⊐(3⊸⊏)˘)⊸⊔ inOutFlows 
+>3↑ 13↑¨ sigFlows ← ( (×´¨ <˘))¨ (2‿4⊸⊏˘)¨ aflows 
+13↑ finalAmounts ← +´¨ sigFlows 
+>3↑ 9↑¨ cumFlows ←  +`¨ sigFlows 
+ 12⊑ aflows ∾˘¨ cumFlows
+assets (⊑⊒) <"BTC"
+ assets ∾˘ finalAmounts
 
 (<¯2⊸↑)˘ transNet
 

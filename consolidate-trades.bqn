@@ -1,7 +1,7 @@
 
 
 ⟨CsvSplit⇐Split,Join,CsvSplitL⇐SplitL,JoinL⟩←•Import "bqn-libs/csv.bqn"
-⟨StrSplit⇐Split⟩←•Import "bqn-libs/strings.bqn"
+⟨ToNums, ReplaceAll, StrSplit⇐Split⟩←•Import "bqn-libs/strings.bqn"
 ToUpper ← -⟜(32×1="a{"⊸⍋)
 RowNu ← { ((↕≠𝕩)-𝕨) ∾˘ 𝕩}
 SplitNum ←•Parsefloat‿⊢{𝕎 𝕩}¨(("-."∾'0' + ↕10) (((⊢⋈¬)∘∊˜)/¨(<⊢)) ⊢)
@@ -188,7 +188,17 @@ BitgetTra← { 𝕤
 ### Consolidate all trades
 
 
-15↑ trans←  ((⍋1⊸⊏˘)⊏⊢) (⊏˘ ∾˘ ((10⊸↑⊸∾⟜" "⊸∾⟜(8⊸↑ 11⊸↓))¨ 1⊸⊏˘) ∾˘ 2⊸↓˘) ∾´ BinanceTra‿PhemexTra‿KucoinTra‿BitgetTra‿CoinbaseProTra { 1↓ 𝕎 𝕩}¨ <0
+≢ trans←  ((⍋1⊸⊏˘)⊏⊢) (⊏˘ ∾˘ ((10⊸↑⊸∾⟜" "⊸∾⟜(8⊸↑ 11⊸↓))¨ 1⊸⊏˘) ∾˘ 2⊸↓˘) ∾´ BinanceTra‿PhemexTra‿KucoinTra‿BitgetTra‿CoinbaseProTra { 1↓ 𝕎 𝕩}¨ <0
+
+# convert DAI USDC BUSD to USDT
+qqotes← ⍷cquote ← ⥊((¬∊⟜"DAI"‿"USDC"‿"BUSD") ⊏˘ ((<"USDT")⊸∾˘)) ⥊˘4⊏˘ trans
+# take base and quote amounts according to side
+¯10↑ trans
+¯10↑¨ bamnt‿qamnt ← <˘⍉ ((1⊸≢¨ 2⊸⊏˘) ⌽˘ (¯2⊸↑˘)) trans
+ToNums¨ 10↑ 1⊏˘ trans
+
+
+# Totals and bags
 # Calculate totals by asset
 15↑ inFlows ← (2↑˘ trans) ∾˘ 1 ∾˘ ((1≢¨2⊏˘trans) ⊑¨ <˘⍉3‿4 ⊏ ⍉trans) ∾˘ 5⊏˘trans
 15↑ outFlows ← (2↑˘ trans) ∾˘ ¯1 ∾˘ ((1≡¨2⊏˘trans) ⊑¨ <˘⍉3‿4 ⊏ ⍉trans) ∾˘ -6⊏˘trans
@@ -198,8 +208,8 @@ BitgetTra← { 𝕤
 iassets ← ⍋assetsH
 assets ← iassets ⊏ assetsH
 assets (⊑⊒) <"BTC"
-10↑ 12⊑ aflows ←  ((⍋1⊸⊏˘)⊏⊢)¨ iassets ⊏ (⊐(3⊸⊏)˘)⊸⊔ inOutFlows 
-200↑ 10600↓ 12⊑ (∾˘⟜(+`¯1⊸⊏˘))¨ aflows
+5↑ 12⊑ aflows ←  ((⍋1⊸⊏˘)⊏⊢)¨ iassets ⊏ (⊐(3⊸⊏)˘)⊸⊔ inOutFlows 
+5↑ 10600↓ 12⊑ (∾˘⟜(+`¯1⊸⊏˘))¨ aflows
 #>3↑ 13↑¨ sigFlows ← ( (×´¨ <˘))¨ (2‿4⊸⊏˘)¨ aflows 
 #1⊸⊏¨aflows
 13↑ finalAmounts ← (+´ ¯1⊸⊏˘) ¨ aflows 

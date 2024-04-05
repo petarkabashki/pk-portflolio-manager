@@ -196,23 +196,44 @@ qquotes← ⍷cquote ← ⥊((¬∊⟜"DAI"‿"USDC"‿"BUSD") ⊏˘ ((<"USDT")�
 # take base and quote amounts according to side
 ¯10↑¨ bamnt‿qamnt ← <˘⍉ ((1⊸≢¨ 2⊸⊏˘) ⌽˘ (¯2⊸↑˘)) trans
 10↑ htts← FromTS¨ hdts← (∾⟜0‿0 4⊸↑)¨ dts← (ToNums  ⟨"-"⟩‿⟨" "⟩⊸ReplaceAll)¨ 1⊏˘ trans
+
+
+FillMissing ← { 
+	ts‿p← <˘⍉0‿¯1⊸⊏˘𝕩
+	ttake ← (∾⟜1∘÷⟜𝕨∘(1⊸↓-⟜»))ts 
+	(∾´(ts) + 𝕨 × ↕¨ ttake) ≍˘ (ttake / p)
+} 
+
+lquotes ← ((¬∊⟜"GBP"‿"USDT")⊸/) qquotes
 # Loading quote candlesticks except USDT
-LoadQ ← { qquotes ← 𝕩
-	lquotes ← ((¬∊⟜"GBP"‿"USDT")⊸/) qquotes
+LoadQ ← { lquotes ← 𝕩
 	qfiles← (⊢∾⟜"_USDT-1h.json")¨ (<"/media/mu6mula/Data/Crypto-Data-Feed/freq-user-data/data/binance/") ∾¨ lquotes
-	3↑¨ qticks ← (((ToTS¨∘÷⟜1000 ⊏˘ )∾˘(¯1↓1⊸↓)˘)>∘JParse∘•FChars)¨ qfiles
-	3↑ tgbp← ((∾⟜0∘(ToNums⟨"-"⟩‿⟨" "⟩⊸ReplaceAll)¨∘⊏˘)∾˘(•ParseFloat¨˘ (¯1↓˘1⊸↓˘)))>¯1↓76000↓CsvSplit•FChars"GBPUSD60.csv"
-	3↑¨ qgticks ← ((FromTS¨∘⊏˘)∾˘⊢)¨ qticks  ∾ <tgbp
+	qticks ← (((÷⟜1000∘⊏˘) ∾˘ ((+´÷≠)˘1‿2‿3‿4⊸⊏˘))∘>∘JParse∘•FChars)¨ qfiles
+	gbp ← ((FromTS¨⊏˘)∾˘( (+´÷≠)˘1‿2‿3‿4⊸⊏˘))  ((∾⟜0∘(ToNums⟨"-"⟩‿⟨" "⟩⊸ReplaceAll)¨∘⊏˘)∾˘(•ParseFloat¨˘ (¯1↓˘1⊸↓˘)))>¯1↓76000↓CsvSplit•FChars"GBPUSD60.csv"
+	3↑¨ qgticks ←  qticks  ∾ <gbp
 	lgquotes ← lquotes∾<"GBP"
 	lgquotes‿qgticks
 }
-⊑ gquotes‿gticks ← LoadQ qquotes
+⊑ gquotes‿gticks ← LoadQ lquotes
+usmask←(∊⟜⟨"USDT"⟩) qquotes 
+nuquotes ← (¬usmask)/ qquotes 
+>2↑¨orticks ← (gquotes ⊐ nuquotes) ⊏ 3600⊸FillMissing¨ gticks 
+>2↑¨  grtrans ← (⊐cquote)⊔trans
+>2↑¨nugtrans ← (¬usmask) / grtrans
+gtrts ← ((⊐cquote)⊔htts) 
+### missing quote tickers
++´¨ (⊏˘¨orticks) (¬⊢∊⊣)¨ (¬usmask) / gtrts
+
+≢ ¯1⊑ gticks
 fts‿lts ← 0‿¯1⊏ htts # first and last timestamp of transactions
 # first and last timestamp per quote unit
 (⊏˘ 0‿¯1⊸⊏)¨ gticks
-()
+⊏˘¨ gticks
+10↑ trans
+>1↑¨  ((⊐4⊸⊏˘)⊸⊔) trans
+≢¨ gticks
+≢¨(<trans) /¨˜ (<htts) (¬∊)¨ ⊏˘¨ gticks 
 
-⊑ qgticks
 
 # Totals and bags
 # Calculate totals by asset

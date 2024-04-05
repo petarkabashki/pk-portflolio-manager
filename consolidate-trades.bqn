@@ -1,5 +1,6 @@
 
-
+⟨FromTS⇐FromTimestamp, ToTS⇐ToTimestamp⟩ ← •Import "bqn-libs/datetime.bqn"
+⟨JParse⇐Parse⟩ ← •Import "bqn-libs/json.bqn"
 ⟨CsvSplit⇐Split,Join,CsvSplitL⇐SplitL,JoinL⟩←•Import "bqn-libs/csv.bqn"
 ⟨ToNums, ReplaceAll, StrSplit⇐Split⟩←•Import "bqn-libs/strings.bqn"
 ToUpper ← -⟜(32×1="a{"⊸⍋)
@@ -187,16 +188,31 @@ BitgetTra← { 𝕤
 #############################################
 ### Consolidate all trades
 
-
+# Load consolidated transactions ordered by timestamp
 ≢ trans←  ((⍋1⊸⊏˘)⊏⊢) (⊏˘ ∾˘ ((10⊸↑⊸∾⟜" "⊸∾⟜(8⊸↑ 11⊸↓))¨ 1⊸⊏˘) ∾˘ 2⊸↓˘) ∾´ BinanceTra‿PhemexTra‿KucoinTra‿BitgetTra‿CoinbaseProTra { 1↓ 𝕎 𝕩}¨ <0
 
 # convert DAI USDC BUSD to USDT
-qqotes← ⍷cquote ← ⥊((¬∊⟜"DAI"‿"USDC"‿"BUSD") ⊏˘ ((<"USDT")⊸∾˘)) ⥊˘4⊏˘ trans
+qquotes← ⍷cquote ← ⥊((¬∊⟜"DAI"‿"USDC"‿"BUSD") ⊏˘ ((<"USDT")⊸∾˘)) ⥊˘4⊏˘ trans
 # take base and quote amounts according to side
-¯10↑ trans
 ¯10↑¨ bamnt‿qamnt ← <˘⍉ ((1⊸≢¨ 2⊸⊏˘) ⌽˘ (¯2⊸↑˘)) trans
-ToNums¨ 10↑ 1⊏˘ trans
+10↑ htts← FromTS¨ hdts← (∾⟜0‿0 4⊸↑)¨ dts← (ToNums  ⟨"-"⟩‿⟨" "⟩⊸ReplaceAll)¨ 1⊏˘ trans
+# Loading quote candlesticks except USDT
+LoadQ ← { qquotes ← 𝕩
+	lquotes ← ((¬∊⟜"GBP"‿"USDT")⊸/) qquotes
+	qfiles← (⊢∾⟜"_USDT-1h.json")¨ (<"/media/mu6mula/Data/Crypto-Data-Feed/freq-user-data/data/binance/") ∾¨ lquotes
+	3↑¨ qticks ← (((ToTS¨∘÷⟜1000 ⊏˘ )∾˘(¯1↓1⊸↓)˘)>∘JParse∘•FChars)¨ qfiles
+	3↑ tgbp← ((∾⟜0∘(ToNums⟨"-"⟩‿⟨" "⟩⊸ReplaceAll)¨∘⊏˘)∾˘(•ParseFloat¨˘ (¯1↓˘1⊸↓˘)))>¯1↓76000↓CsvSplit•FChars"GBPUSD60.csv"
+	3↑¨ qgticks ← ((FromTS¨∘⊏˘)∾˘⊢)¨ qticks  ∾ <tgbp
+	lgquotes ← lquotes∾<"GBP"
+	lgquotes‿qgticks
+}
+⊑ gquotes‿gticks ← LoadQ qquotes
+fts‿lts ← 0‿¯1⊏ htts # first and last timestamp of transactions
+# first and last timestamp per quote unit
+(⊏˘ 0‿¯1⊸⊏)¨ gticks
+()
 
+⊑ qgticks
 
 # Totals and bags
 # Calculate totals by asset

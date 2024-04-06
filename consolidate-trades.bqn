@@ -1,7 +1,7 @@
 
 ⟨FromTS⇐FromTimestamp, ToTS⇐ToTimestamp⟩ ← •Import "bqn-libs/datetime.bqn"
 ⟨JParse⇐Parse⟩ ← •Import "bqn-libs/json.bqn"
-⟨CsvSplit⇐Split,Join,CsvSplitL⇐SplitL,JoinL⟩←•Import "bqn-libs/csv.bqn"
+csv←•Import "bqn-libs/csv.bqn"
 ⟨ToNums, ReplaceAll, StrSplit⇐Split⟩←•Import "bqn-libs/strings.bqn"
 ToUpper ← -⟜(32×1="a{"⊸⍋)
 RowNu ← { ((↕≠𝕩)-𝕨) ∾˘ 𝕩}
@@ -12,7 +12,7 @@ SplitNum ←•Parsefloat‿⊢{𝕎 𝕩}¨(("-."∾'0' + ↕10) (((⊢⋈¬)�
 
 PhemexTra← { 𝕤
 	files←(<"../trading-data/phemex/") ∾¨ "SPOT_TRADE_2023"‿"SPOT_TRADE_2024-interim" ∾¨ (<".csv")
-	data← >∾´(1⊸↓ >CsvSplitL  •FLines)¨  files
+	data← >∾´(1⊸↓ >csv.SplitL  •FLines)¨  files
 	tscol ← ⊏˘ data
 	side← ToUpper¨ 2⊏˘data
 	iside← ¯1+ 2×side ≡¨ (<"BUY")
@@ -34,8 +34,8 @@ PhemexTra← { 𝕤
 # Replace with SpotOrder logs and include transactions
 #BinaTraOrderHist← { 𝕤
 #	files←(<"../trading-data/binance/OrderHistory/") ∾¨ "2024-02-22 19_27_28"‿"2023"‿"2022"‿"2021"‿"2020" ∾¨ (<".csv")
-#	#data← ⟨ 1, 10, 697, 698, 1398, 1605, 1606, 1752, 1855, 1859, 1869, 1870 ⟩ ⊏ >∾´(1⊸↓ >CsvSplitL  •FLines)¨  files
-#	data← >∾´(1⊸↓ >CsvSplitL  •FLines)¨  files
+#	#data← ⟨ 1, 10, 697, 698, 1398, 1605, 1606, 1752, 1855, 1859, 1869, 1870 ⟩ ⊏ >∾´(1⊸↓ >csv.SplitL  •FLines)¨  files
+#	data← >∾´(1⊸↓ >csv.SplitL  •FLines)¨  files
 #
 #	side← ToUpper¨ 4⊏˘data
 #	iside← ¯1+ 2×side ≡¨ (<"BUY")
@@ -69,7 +69,7 @@ PhemexTra← { 𝕤
 
 BinanceTra← { 𝕤
 	files←(<"../trading-data/binance/SpotOrder/") ∾¨ "2023"‿"2022"‿"2021"‿"2020" ∾¨ (<".csv")
-	data← >∾´(1⊸↓ >CsvSplitL  •FLines)¨  files
+	data← >∾´(1⊸↓ >csv.SplitL  •FLines)¨  files
 	side← ToUpper¨ 2⊏˘data
 	iside← ¯1+ 2×side ≡¨ (<"BUY")
 	qassets←"BTC"‿"USDT"‿"BUSD"‿"GBP"‿"USDC"‿"UST"‿"DAI"‿"ETH"
@@ -101,7 +101,7 @@ BinanceTra← { 𝕤
 #  Coinbase
 CoinbaseProTra← { 𝕤
 	files←(<"../trading-data/coinbase-pro/") ∾¨ ⥊ (<"fills-2023-12-22") ∾¨ (<".csv")
-	data← ((⍋4⊸⊏˘)⊏⊢) >∾´(1⊸↓ >CsvSplitL  •FLines)¨  files
+	data← ((⍋4⊸⊏˘)⊏⊢) >∾´(1⊸↓ >csv.SplitL  •FLines)¨  files
 	tscol ← 4⊏˘ data
 	side← ToUpper¨ 3⊏˘data
 	iside← ¯1+ 2×side ≡¨ (<"BUY")
@@ -133,7 +133,7 @@ CoinbaseProTra← { 𝕤
 #  Kucoin
 KucoinTra← { 𝕤
 	files←(<"../trading-data/kucoin/Completed_Trades-") ∾¨ ("2021"‿"2022") ∾¨ (<".csv")
-	data← >∾´(1⊸↓ >CsvSplitL  •FLines)¨  files
+	data← >∾´(1⊸↓ >csv.SplitL  •FLines)¨  files
 	tscol ← 10⊏˘ data
 	side← ToUpper¨ 4⊏˘data
 	iside← ¯1+ 2×side ≡¨ (<"BUY")
@@ -159,7 +159,7 @@ KucoinTra← { 𝕤
 BitgetTra← { 𝕤
 	files←(<"../trading-data/bitget/Spot Order History-") ∾¨ ("2023"‿"2024-prelim") ∾¨ (<".csv")
 	# filter out cancelled
-	data← (((<"cancelled")≢¨8⊸⊏˘) / ⊢) >∾´(1⊸↓ >CsvSplitL  •FLines)¨  files
+	data← (((<"cancelled")≢¨8⊸⊏˘) / ⊢) >∾´(1⊸↓ >csv.SplitL  •FLines)¨  files
 	tscol ← 0⊏˘ data
 	side← ToUpper¨ 3⊏˘data
 	iside← ¯1+ 2×side ≡¨ (<"BUY")
@@ -209,7 +209,7 @@ lquotes ← ((¬∊⟜"GBP"‿"USDT")⊸/) qquotes
 LoadQ ← { lquotes ← 𝕩
 	qfiles← (⊢∾⟜"_USDT-1h.json")¨ (<"/media/mu6mula/Data/Crypto-Data-Feed/freq-user-data/data/binance/") ∾¨ lquotes
 	qticks ← (((÷⟜1000∘⊏˘) ∾˘ ((+´÷≠)˘1‿2‿3‿4⊸⊏˘))∘>∘JParse∘•FChars)¨ qfiles
-	gbp ← ((FromTS¨⊏˘)∾˘( (+´÷≠)˘1‿2‿3‿4⊸⊏˘))  ((∾⟜0∘(ToNums⟨"-"⟩‿⟨" "⟩⊸ReplaceAll)¨∘⊏˘)∾˘(•ParseFloat¨˘ (¯1↓˘1⊸↓˘)))>¯1↓76000↓CsvSplit•FChars"GBPUSD60.csv"
+	gbp ← ((FromTS¨⊏˘)∾˘( (+´÷≠)˘1‿2‿3‿4⊸⊏˘))  ((∾⟜0∘(ToNums⟨"-"⟩‿⟨" "⟩⊸ReplaceAll)¨∘⊏˘)∾˘(•ParseFloat¨˘ (¯1↓˘1⊸↓˘)))>¯1↓76000↓csv.Split•FChars"GBPUSD60.csv"
 	3↑¨ qgticks ←  qticks  ∾ <gbp
 	lgquotes ← lquotes∾<"GBP"
 	lgquotes‿qgticks
@@ -218,12 +218,26 @@ LoadQ ← { lquotes ← 𝕩
 usmask←(∊⟜⟨"USDT"⟩) qquotes 
 nuquotes ← (¬usmask)/ qquotes 
 >2↑¨orticks ← (gquotes ⊐ nuquotes) ⊏ 3600⊸FillMissing¨ gticks 
->2↑¨  grtrans ← (⊐cquote)⊔trans
->2↑¨nugtrans ← (¬usmask) / grtrans
-gtrts ← ((⊐cquote)⊔htts) 
+≢¨gtrts ← ((⊐cquote)⊔htts) 
 ### missing quote tickers
 +´¨ (⊏˘¨orticks) (¬⊢∊⊣)¨ (¬usmask) / gtrts
++´¨ orticks ( ( (⊏˘⊣)⊐⊢) ≥ (≠⊣))¨ (¬usmask)/gtrts
 
+## Ticker quote price in USDT per transaction (grouped by cquotes)
+2↑¨ gusdp ← (orticks (((⊏˘⊣)⊐⊢)⊏(1⊸⊏˘⊣))¨(¬usmask)/gtrts) ∾ <((≠(⊑/usmask)⊑gtrts)⥊1)
+itrans ← (qquotes ⊐ (∾⟜(<"USDT")) ⊢ (¬usmask) / qquotes) 
+
+"transactions.csv" •FLines csv.JoinL ((2⊸↑˘) ∾˘ (•Fmt¨ 2⊸⊏˘) ∾˘ 3‿4⊸⊏˘ ∾˘ (•Fmt¨5⊸↓˘))  ∾´ gusdp (∾˜˘)¨ itrans ⊏ (grtrans ← (⊐cquote)⊔trans)
+csv.Join 2‿3⥊↑"BQNcs"
+>2↑¨nugtrans ← (¬usmask) / grtrans
+
+
+
+
+
+
+
+3↑¨ orticks ((⊏˘⊣))¨ (¬usmask) / gtrts
 ≢ ¯1⊑ gticks
 fts‿lts ← 0‿¯1⊏ htts # first and last timestamp of transactions
 # first and last timestamp per quote unit

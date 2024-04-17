@@ -2,7 +2,7 @@
 ⟨FromTS⇐FromTimestamp, ToTS⇐ToTimestamp⟩ ← •Import "bqn-libs/datetime.bqn"
 ⟨JParse⇐Parse⟩ ← •Import "bqn-libs/json.bqn"
 csv←•Import "bqn-libs/csv.bqn"
-⟨ToNums, ReplaceAll, StrSplit⇐Split⟩←•Import "bqn-libs/strings.bqn"
+str←•Import "bqn-libs/strings.bqn"
 ToUpper ← -⟜(32×1="a{"⊸⍋)
 RowNu ← { ((↕≠𝕩)-𝕨) ∾˘ 𝕩}
 SplitNum ←•Parsefloat‿⊢{𝕎 𝕩}¨(("-."∾'0' + ↕10) (((⊢⋈¬)∘∊˜)/¨(<⊢)) ⊢)
@@ -16,11 +16,11 @@ PhemexTra← { 𝕤
 	tscol ← ⊏˘ data
 	side← ToUpper¨ 2⊏˘data
 	iside← ¯1+ 2×side ≡¨ (<"BUY")
-	base‿quote ← <˘⍉> " / "⊸StrSplit¨ 1⊏˘data
+	base‿quote ← <˘⍉> " / "⊸str.Split¨ 1⊏˘data
 	xprice←•ParseFloat¨ 4⊏˘data
-	received‿receivedU ←((•ParseFloat¨∘⊏)⋈(1⊸⊏)) ⍉>" "⊸StrSplit¨ 3⊏˘data
-	spent‿spentU ←((•ParseFloat¨∘⊏)⋈(1⊸⊏)) ⍉>" "⊸StrSplit¨ 5⊏˘data
-	#fee‿feeU ←((•ParseFloat¨∘⊏)⋈(1⊸⊏)) ⍉>" "⊸StrSplit¨ 9⊏˘data
+	received‿receivedU ←((•ParseFloat¨∘⊏)⋈(1⊸⊏)) ⍉>" "⊸str.Split¨ 3⊏˘data
+	spent‿spentU ←((•ParseFloat¨∘⊏)⋈(1⊸⊏)) ⍉>" "⊸str.Split¨ 5⊏˘data
+	#fee‿feeU ←((•ParseFloat¨∘⊏)⋈(1⊸⊏)) ⍉>" "⊸str.Split¨ 9⊏˘data
 	("exchange"‿"ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent") ∾ (<"phemex") ∾˘ ⍉[tscol, iside, base, quote, received, spent]
 }
 
@@ -105,7 +105,7 @@ CoinbaseProTra← { 𝕤
 	tscol ← 4⊏˘ data
 	side← ToUpper¨ 3⊏˘data
 	iside← ¯1+ 2×side ≡¨ (<"BUY")
-	base‿quote ← <˘⍉> "-"⊸StrSplit¨ 2⊏˘data
+	base‿quote ← <˘⍉> "-"⊸str.Split¨ 2⊏˘data
 	# check side unit is either base or quote
 	+´1≢¨(⊑∘⥊)¨ (<¨6⊏˘data) ∊¨ (<˘⍉base≍quote)
 	# check fee/total unit is either base or quote
@@ -137,7 +137,7 @@ KucoinTra← { 𝕤
 	tscol ← 10⊏˘ data
 	side← ToUpper¨ 4⊏˘data
 	iside← ¯1+ 2×side ≡¨ (<"BUY")
-	base‿quote ← <˘⍉> "-"⊸StrSplit¨ 3⊏˘data
+	base‿quote ← <˘⍉> "-"⊸str.Split¨ 3⊏˘data
 	#fee ← •ParseFloat¨ 11⊏˘data
 	#feeU← ToUpper¨ 13⊏˘data
 	# check fee unit is always the quote
@@ -191,85 +191,11 @@ BitgetTra← { 𝕤
 # Load consolidated transactions ordered by timestamp
 ≢ trans←  ((⍋1⊸⊏˘)⊏⊢) (⊏˘ ∾˘ ((10⊸↑⊸∾⟜" "⊸∾⟜(8⊸↑ 11⊸↓))¨ 1⊸⊏˘) ∾˘ 2⊸↓˘) ∾´ BinanceTra‿PhemexTra‿KucoinTra‿BitgetTra‿CoinbaseProTra { 1↓ 𝕎 𝕩}¨ <0
 
-# convert DAI USDC BUSD to USDT
-qquotes← ⍷cquote ← ⥊((¬∊⟜"DAI"‿"USDC"‿"BUSD") ⊏˘ ((<"USDT")⊸∾˘)) ⥊˘4⊏˘ trans
-# take base and quote amounts according to side
-¯10↑¨ bamnt‿qamnt ← <˘⍉ ((1⊸≢¨ 2⊸⊏˘) ⌽˘ (¯2⊸↑˘)) trans
-10↑ htts← FromTS¨ hdts← (∾⟜0‿0 4⊸↑)¨ dts← (ToNums  ⟨"-"⟩‿⟨" "⟩⊸ReplaceAll)¨ 1⊏˘ trans
-
-
-FillMissing ← { 
-	ts‿p← <˘⍉0‿¯1⊸⊏˘𝕩
-	ttake ← (∾⟜1∘÷⟜𝕨∘(1⊸↓-⟜»))ts 
-	(∾´(ts) + 𝕨 × ↕¨ ttake) ≍˘ (ttake / p)
-} 
-
-lquotes ← ((¬∊⟜"GBP"‿"USDT")⊸/) qquotes
-# Loading quote candlesticks except USDT
-LoadQ ← { lquotes ← 𝕩
-	qfiles← (⊢∾⟜"_USDT-1h.json")¨ (<"/media/mu6mula/Data/Crypto-Data-Feed/freq-user-data/data/binance/") ∾¨ lquotes
-	qticks ← (((÷⟜1000∘⊏˘) ∾˘ ((+´÷≠)˘1‿2‿3‿4⊸⊏˘))∘>∘JParse∘•FChars)¨ qfiles
-	gbp ← ((FromTS¨⊏˘)∾˘( (+´÷≠)˘1‿2‿3‿4⊸⊏˘))  ((∾⟜0∘(ToNums⟨"-"⟩‿⟨" "⟩⊸ReplaceAll)¨∘⊏˘)∾˘(•ParseFloat¨˘ (¯1↓˘1⊸↓˘)))>¯1↓76000↓csv.Split•FChars"GBPUSD60.csv"
-	3↑¨ qgticks ←  qticks  ∾ <gbp
-	lgquotes ← lquotes∾<"GBP"
-	lgquotes‿qgticks
-}
-⊑ gquotes‿gticks ← LoadQ lquotes
-usmask←(∊⟜⟨"USDT"⟩) qquotes 
-nuquotes ← (¬usmask)/ qquotes 
->2↑¨orticks ← (gquotes ⊐ nuquotes) ⊏ 3600⊸FillMissing¨ gticks 
-≢¨gtrts ← ((⊐cquote)⊔htts) 
-### missing quote tickers
-+´¨ (⊏˘¨orticks) (¬⊢∊⊣)¨ (¬usmask) / gtrts
-+´¨ orticks ( ( (⊏˘⊣)⊐⊢) ≥ (≠⊣))¨ (¬usmask)/gtrts
-
-## Ticker quote price in USDT per transaction (grouped by cquotes)
-2↑¨ gusdp ← (orticks (((⊏˘⊣)⊐⊢)⊏(1⊸⊏˘⊣))¨(¬usmask)/gtrts) ∾ <((≠(⊑/usmask)⊑gtrts)⥊1)
-itrans ← (qquotes ⊐ (∾⟜(<"USDT")) ⊢ (¬usmask) / qquotes) 
-
-"transactions.csv" •FLines csv.JoinL ((2⊸↑˘) ∾˘ (•Fmt¨ 2⊸⊏˘) ∾˘ 3‿4⊸⊏˘ ∾˘ (•Fmt¨5⊸↓˘))  ∾´ gusdp (∾˜˘)¨ itrans ⊏ (grtrans ← (⊐cquote)⊔trans)
-csv.Join 2‿3⥊↑"BQNcs"
->2↑¨nugtrans ← (¬usmask) / grtrans
-
-
-
-
-
-
-
-3↑¨ orticks ((⊏˘⊣))¨ (¬usmask) / gtrts
-≢ ¯1⊑ gticks
-fts‿lts ← 0‿¯1⊏ htts # first and last timestamp of transactions
-# first and last timestamp per quote unit
-(⊏˘ 0‿¯1⊸⊏)¨ gticks
-⊏˘¨ gticks
-10↑ trans
->1↑¨  ((⊐4⊸⊏˘)⊸⊔) trans
-≢¨ gticks
-≢¨(<trans) /¨˜ (<htts) (¬∊)¨ ⊏˘¨ gticks 
-
-
-# Totals and bags
-# Calculate totals by asset
-15↑ inFlows ← (2↑˘ trans) ∾˘ 1 ∾˘ ((1≢¨2⊏˘trans) ⊑¨ <˘⍉3‿4 ⊏ ⍉trans) ∾˘ 5⊏˘trans
-15↑ outFlows ← (2↑˘ trans) ∾˘ ¯1 ∾˘ ((1≡¨2⊏˘trans) ⊑¨ <˘⍉3‿4 ⊏ ⍉trans) ∾˘ -6⊏˘trans
-15↑ inOutFlows ← inFlows ∾ outFlows
-≢inOutFlows
-3↑ assetsH ← ⍷ 3⊏˘ inOutFlows 
-iassets ← ⍋assetsH
-assets ← iassets ⊏ assetsH
-assets (⊑⊒) <"BTC"
-5↑ 12⊑ aflows ←  ((⍋1⊸⊏˘)⊏⊢)¨ iassets ⊏ (⊐(3⊸⊏)˘)⊸⊔ inOutFlows 
-5↑ 10600↓ 12⊑ (∾˘⟜(+`¯1⊸⊏˘))¨ aflows
-#>3↑ 13↑¨ sigFlows ← ( (×´¨ <˘))¨ (2‿4⊸⊏˘)¨ aflows 
-#1⊸⊏¨aflows
-13↑ finalAmounts ← (+´ ¯1⊸⊏˘) ¨ aflows 
-#>3↑ 9↑¨ cumFlows ←  +`¨ sigFlows 
-# 12⊑ aflows ∾˘¨ cumFlows
- assets ∾˘ finalAmounts
-
-(<¯2⊸↑)˘ trans
-
-
-
+#3↑ trans
+#csv.Join 2‿3⥊↑"BQNcs"
+#3↑  csv.JoinL ⊢ ⍉ ⊢‿⊢‿•Fmt‿⊢‿⊢‿•Fmt‿•Fmt {𝕎 𝕩}¨ ⍉ trans
+NumFmt ← ⟨"¯"⟩‿⟨"-"⟩⊸str.ReplaceAll ∘ •Fmt
+#NumFmt ¯100
+#≢ csv.JoinL ⊢ ⍉ ⊢‿⊢‿NumFmt‿⊢‿⊢‿NumFmt‿NumFmt {𝕎 𝕩}¨ ⍉ trans
+"trades.csv" •FLines csv.JoinL ⊢ ⍉ ⊢‿⊢‿NumFmt‿⊢‿⊢‿NumFmt‿NumFmt {𝕎 𝕩}¨ ⍉ trans
 

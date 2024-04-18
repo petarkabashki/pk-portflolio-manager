@@ -9,19 +9,49 @@ NFmt ← ⟨"¯"⟩‿⟨"-"⟩⊸str.ReplaceAll ∘ •Fmt
 ParseDT ← (∾⟜0‿0 4⊸↑) (str.ToNums  ⟨"-"⟩‿⟨" "⟩⊸str.ReplaceAll) 
 ParseTS ← FromTS ParseDT
 ((↕≠)≍⊢)∘⊑ tnh‿tnd ← ⊢‿>{𝕎𝕩}¨ 1(⊑∘↑⋈↓) csv.SplitL •FLines "transactions.csv"
-3↑ (⍋(ParseTS¨ 1⊸⊏˘)) tnd
 3↑ trans ← ((⍋(ParseTS¨ 1⊸⊏˘))⊸⊏) ∾˘´{⍉⊢‿⊢‿•ParseFloat‿⊢‿⊢{𝕎𝕩}¨⍉𝕩}‿{•ParseFloat¨𝕩} {𝕎 𝕩}¨ 5 (↑˘⋈↓˘) tnd
+IfElse ← {cond‿True‿False: cond◶False‿True @}
 
 CalcBalances ← { trans ← 𝕩
 	2↑ flows ← ∾´ ⟨3,7,1⟩‿⟨4,8,¯1⟩ {a‿q‿m←𝕨⋄ (3⊸↑˘∾˘a⊸⊏˘∾˘(m⊸× 2⊸⊏˘×q⊸⊏˘)) 𝕩}¨ <trans
 	assets ← ⍷3⊏˘flows
-	#3↑¨ 4 (↑˘⋈↓˘) (∾˘⟜(+`¯1⊸⊏˘)) ⊑ ((⊐2⊸⊏˘)⊔⊢)  flows
 	3↑¨ assets { csv.JoinL ⍉⊢‿⊢‿NFmt‿⊢‿NFmt‿NFmt {𝕎 𝕩 }¨ ⍉(∾˘⟜(+`¯1⊸⊏˘)) 𝕩}¨ ((⊐3⊸⊏˘)⊔⊢)  flows
 	assets { ("reports/flows/"∾𝕨 ∾ ".csv" ) •FLines (<"xchg,dt,side,asset,qty,cum") ∾ csv.JoinL ⍉⊢‿⊢‿NFmt‿⊢‿NFmt‿NFmt {𝕎 𝕩 }¨ ⍉(∾˘⟜(+`¯1⊸⊏˘)) 𝕩}¨ ((⊐3⊸⊏˘)⊔⊢)  flows
 
-	abals ← (⍋⊏˘)⊸⊏ assets ≍˘ +´¨ ((⊐3⊸⊏˘)⊔¯1⊸⊏˘)  flows
+	abals ← assets ≍˘  +´¨ ((⊐3⊸⊏˘)⊔¯1⊸⊏˘)  flows
+	"balances.csv" •FLines csv.JoinL ∾˘´ ⊢‿NFmt {𝕎¨𝕩}¨ 1 (↑˘⋈↓˘) (⍋⊏˘)⊸⊏ abals
+	abals
 }
-"balances.csv" •FLines csv.JoinL ∾˘´ ⊢‿NFmt {𝕎¨𝕩}¨ 1 (↑˘⋈↓˘) CalcBalances trans
+bals ← CalcBalances trans
+CalcAllBags ← { trans ← 𝕩
+	2↑ flows ← ∾´ ⟨3,7,1⟩‿⟨4,8,¯1⟩ {a‿q‿m←𝕨⋄ (2⊸↑˘∾˘ (m×2⊸⊏˘) ∾˘ a⊸⊏˘∾˘(q⊸⊏˘)∾˘9‿10‿11⊸⊏˘) 𝕩}¨ <trans
+	assets ← ⍷3⊏˘flows
+	5↑ ⊑ grtr ← ((⊐3⊸⊏˘)⊔⊢)  flows
+	CalcBag ← {
+		> (<0‿0‿0) {
+			rb‿rq‿rpnl ← 𝕨   ⋄ sd‿tb‿tq ← 𝕩
+			IfElse (sd≡1)‿{𝕤
+				(rb+tb)‿(rq+tq)‿0
+			}‿{𝕤
+				tp←tq÷tb ⋄ rp ← rq÷rb ⋄ nb←(rb-tb) ⋄ nq ← nb×rp ⋄ pnl ← tb × tp - rp ⋄
+				nb‿nq‿pnl
+			}
+		}` 𝕩  
+	}
 
+	qquotes ← "usdt"‿"btc"‿"gbp"
+	pnldirs ← {"reports/pnls-"∾𝕩}¨ qquotes 
+	{{•file.CreateDir 𝕩}⍟(¬•file.Exists) 𝕩}¨ pnldirs 
 
+	5↑⊑⊑ pnls ← 5‿6‿7 {(CalcBag(<˘ 2‿4‿𝕨⊸⊏˘))¨ 𝕩}¨ <grtr
+	⊑⊑ pnldirs {d←𝕨⋄  assets { (d∾"/"∾𝕨∾".csv") •FLines (<"xch,dt,base,quote,pnl") ∾ csv.JoinL 𝕩}¨ (2↑˘¨grtr) ∾˘¨ NFmt¨¨ 𝕩 }¨ pnls
+	 2↑¨bags←(((>¯1⊸⊏¨)))¨pnls
+	qquotes { ("bags-"∾𝕨∾".csv") •FLines csv.JoinL ((⍋⊏˘)⊏⊢) assets ∾˘ NFmt¨ 𝕩}¨ bags
+	qquotes‿assets‿pnls‿bags
+}
+
+⊑ qquotes‿assets‿pnls‿bags ← CalcAllBags trans
+# check bags and balances are the same to small rounding error
+assets ≡ ⊏˘ bals
+1e¯8⊸< +´¨ (<1⊸⊏˘bals) (|-)¨ ⊏˘¨bags
 

@@ -7,6 +7,8 @@ RowNu ← { ((↕≠𝕩)-𝕨) ∾˘ 𝕩}
 SplitNum ←•Parsefloat‿⊢{𝕎 𝕩}¨(("-."∾'0' + ↕10) (((⊢⋈¬)∘∊˜)/¨(<⊢)) ⊢)
 
 
+NFmt ← ⟨"¯"⟩‿⟨"-"⟩⊸str.ReplaceAll ∘ •Fmt
+
 FillMissing ← { 
 	ts‿p← <˘⍉0‿¯1⊸⊏˘𝕩
 	ttake ← (∾⟜1∘÷⟜𝕨∘(1⊸↓-⟜»))ts 
@@ -71,30 +73,30 @@ btcf ← ∾⟜("_USDT-1h.json") ("/media/mu6mula/Data/Crypto-Data-Feed/freq-use
 3↑¨ abtc‿agbp ← btcP‿gbpP ÷˜¨ <ausdt ← usdtQP × qamnt 
 3↑trans ← trades ∾˘ bamnt ∾˘ qamnt ∾˘ ausdt ∾˘ abtc ∾˘ agbp
 htrans ← "exchange"‿"time"‿"side"‿"base"‿"quote"‿"received"‿"spent"‿"baseAmt"‿"quoteAmt"‿"usdt"‿"btc"‿"gbp"
-"transactions.csv" •FLines csv.JoinL htrans ∾ ({⍉⊢‿⊢‿•Fmt‿⊢‿⊢{𝕎𝕩}¨⍉5↑˘𝕩}∾˘{•Fmt¨5↓˘𝕩}) trans
+"transactions.csv" •FLines csv.JoinL htrans ∾ ({⍉⊢‿⊢‿NFmt‿⊢‿⊢{𝕎𝕩}¨⍉5↑˘𝕩}∾˘{NFmt¨5↓˘𝕩}) trans
 
 
-# Totals and bags
-# Calculate totals by asset
-15↑ inFlows ← (2↑˘ trans) ∾˘ 1 ∾˘ ((1≢¨2⊏˘trans) ⊑¨ <˘⍉3‿4 ⊏ ⍉trans) ∾˘ 5⊏˘trans
-15↑ outFlows ← (2↑˘ trans) ∾˘ ¯1 ∾˘ ((1≡¨2⊏˘trans) ⊑¨ <˘⍉3‿4 ⊏ ⍉trans) ∾˘ -6⊏˘trans
-15↑ inOutFlows ← inFlows ∾ outFlows
-≢inOutFlows
-3↑ assetsH ← ⍷ 3⊏˘ inOutFlows 
-iassets ← ⍋assetsH
-assets ← iassets ⊏ assetsH
-assets (⊑⊒) <"BTC"
-5↑ 12⊑ aflows ←  ((⍋1⊸⊏˘)⊏⊢)¨ iassets ⊏ (⊐(3⊸⊏)˘)⊸⊔ inOutFlows 
-5↑ 10600↓ 12⊑ (∾˘⟜(+`¯1⊸⊏˘))¨ aflows
-#>3↑ 13↑¨ sigFlows ← ( (×´¨ <˘))¨ (2‿4⊸⊏˘)¨ aflows 
-#1⊸⊏¨aflows
-   13↑ finalAmounts ← (+´ ¯1⊸⊏˘) ¨ aflows 
-#>3↑ 9↑¨ cumFlows ←  +`¨ sigFlows 
-# 12⊑ aflows ∾˘¨ cumFlows
- assets ∾˘ finalAmounts
- 
-(<¯2⊸↑)˘ trans
-
-
-
- csv.Join 3↑ trans
+## Totals and bags
+## Calculate totals by asset
+#15↑ inFlows ← (2↑˘ trans) ∾˘ 1 ∾˘ ((1≢¨2⊏˘trans) ⊑¨ <˘⍉3‿4 ⊏ ⍉trans) ∾˘ 5⊏˘trans
+#15↑ outFlows ← (2↑˘ trans) ∾˘ ¯1 ∾˘ ((1≡¨2⊏˘trans) ⊑¨ <˘⍉3‿4 ⊏ ⍉trans) ∾˘ -6⊏˘trans
+#15↑ inOutFlows ← inFlows ∾ outFlows
+#≢inOutFlows
+#3↑ assetsH ← ⍷ 3⊏˘ inOutFlows 
+#iassets ← ⍋assetsH
+#assets ← iassets ⊏ assetsH
+#assets (⊑⊒) <"BTC"
+#5↑ 12⊑ aflows ←  ((⍋1⊸⊏˘)⊏⊢)¨ iassets ⊏ (⊐(3⊸⊏)˘)⊸⊔ inOutFlows 
+#5↑ 10600↓ 12⊑ (∾˘⟜(+`¯1⊸⊏˘))¨ aflows
+##>3↑ 13↑¨ sigFlows ← ( (×´¨ <˘))¨ (2‿4⊸⊏˘)¨ aflows 
+##1⊸⊏¨aflows
+#   13↑ finalAmounts ← (+´ ¯1⊸⊏˘) ¨ aflows 
+##>3↑ 9↑¨ cumFlows ←  +`¨ sigFlows 
+## 12⊑ aflows ∾˘¨ cumFlows
+# assets ∾˘ finalAmounts
+# 
+#(<¯2⊸↑)˘ trans
+#
+#
+#
+# csv.Join 3↑ trans

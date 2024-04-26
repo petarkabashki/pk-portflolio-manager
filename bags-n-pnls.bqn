@@ -12,6 +12,10 @@ ParseTS ← FromTS ParseDT
 3↑ trans ← ((⍋(ParseTS¨ 1⊸⊏˘))⊸⊏) ∾˘´{⍉⊢‿⊢‿•ParseFloat‿⊢‿⊢{𝕎𝕩}¨⍉𝕩}‿{•ParseFloat¨𝕩} {𝕎 𝕩}¨ 5 (↑˘⋈↓˘) tnd
 IfElse ← {cond‿True‿False: cond◶False‿True @}
 
+qquotes ← "usdt"‿"btc"‿"gbp"
+pnldirs ← {"reports/pnls-"∾𝕩}¨ qquotes 
+{{•file.CreateDir 𝕩}⍟(¬•file.Exists) 𝕩}¨ pnldirs ∾ <"reports/flows"
+
 CalcBalances ← { trans ← 𝕩
 	2↑ flows ← ∾´ ⟨3,7,1⟩‿⟨4,8,¯1⟩ {a‿q‿m←𝕨⋄ (3⊸↑˘∾˘a⊸⊏˘∾˘(m⊸× 2⊸⊏˘×q⊸⊏˘)) 𝕩}¨ <trans
 	assets ← ⍷3⊏˘flows
@@ -46,21 +50,20 @@ CalcPnl ← {
 	}` 𝕩  
 }
 #15↑   2‿4‿5⊸⊏˘ 23⊑grtr
-qquotes ← "usdt"‿"btc"‿"gbp"
 3↑⊑⊑ pnls ← 5‿6‿7 {
 	((⊢∾˘(+`¯1⊸⊏˘)) (CalcPnl(<˘ 2‿4‿𝕨⊸⊏˘)))¨ 𝕩
 }¨ <grtr
 
-pnldirs ← {"reports/pnls-"∾𝕩}¨ qquotes 
-{{•file.CreateDir 𝕩}⍟(¬•file.Exists) 𝕩}¨ pnldirs 
-⊑⊑ pnldirs {d←𝕨⋄  assets { (d∾"/"∾𝕨∾".csv") •FLines (<"xch,dt,base,quote,pnl,cumPnl") ∾ csv.JoinL 𝕩}¨ (2↑˘¨grtr) ∾˘¨ NFmt¨¨ 𝕩 }¨ pnls
-2↑⊑bags←((0‿1‿3⊸⊏˘(>¯1⊸⊏¨)))¨pnls
+⊑⊑ pnldirs {d←𝕨⋄  assets { (d∾"/"∾𝕨∾".csv") •FLines (<"xch,dt,side,asset,base,qUSDT,qBTC,qGBP,bagBase,bagQuote,pnl,cumPnl") ∾ csv.JoinL 𝕩}¨ NFmt¨¨ grtr ∾˘¨ 𝕩 }¨ pnls
+#⊑⊑ pnldirs {d←𝕨⋄  assets { (d∾"/"∾𝕨∾".csv") •FLines (<"xch,dt,side,base,quote,pnl,cumPnl") ∾ csv.JoinL 𝕩}¨ (2↑˘¨grtr) ∾˘¨ NFmt¨¨ (¯4↑˘¨grtr) ∾˘¨ (2⊏˘¨grtr) ∾˘¨ 𝕩 }¨ pnls
+3↑¨ bags←((0‿1‿3⊸⊏˘(>¯1⊸⊏¨)))¨pnls
+"bags.csv" •FLines (<"asset,baseUSDT,quoteUSDT,pnlUSDT,baseBTC,quoteBTC,pnlBTC,baseGBP,quoteGBP,pnlGBP") ∾ csv.JoinL ((⍋⊏˘)⊏⊢) NFmt¨ assets ∾˘  ∾˘´ bags
 qquotes { ("bags-"∾𝕨∾".csv") •FLines (<"asset,base,quote,pnl") ∾ csv.JoinL ((⍋⊏˘)⊏⊢) assets ∾˘ NFmt¨ 𝕩}¨ bags
 # check bags and balances are the same to small rounding error
 assets ≡ ⊏˘ bals
 1e¯8⊸< +´¨ (<1⊸⊏˘bals) (|-)¨ ⊏˘¨bags
 #3↑ ⊑ ParseTS¨¨   (1⊸⊏˘)¨grtr
 #•math.isnaN
-#13↑¨ (<ParseTS¨¨1⊸⊏˘¨grtr) ((∾˘⟜(+`¯1⊸⊏˘)) (((⍋⊑˘)⊸⊏)(∾´∾˘¨)))¨ 2⊸⊏˘¨¨ pnls
+#13↑¨ (<ParseTS¨¨1⊸⊏˘¨grtr) ((∾˘⟜(+`¯1⊸⊏˘)) (((⍋⊑˘)⊸⊏)(∾´∾˘¨)))¨ 3⊸⊏˘¨¨ pnls
 
 

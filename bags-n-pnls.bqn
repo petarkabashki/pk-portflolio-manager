@@ -22,7 +22,7 @@ CalcBalances ← { trans ← 𝕩
 	"balances.csv" •FLines csv.JoinL ∾˘´ ⊢‿NFmt {𝕎¨𝕩}¨ 1 (↑˘⋈↓˘) (⍋⊏˘)⊸⊏ abals
 	abals
 }
-bals ← CalcBalances trans
+3↑ bals ← CalcBalances trans
 ### Bags & PNLs
 2↑ flows ← ∾´ ⟨3,7,1⟩‿⟨4,8,¯1⟩ {a‿q‿m←𝕨⋄ (2⊸↑˘∾˘ (m×2⊸⊏˘) ∾˘ a⊸⊏˘∾˘(q⊸⊏˘)∾˘9‿10‿11⊸⊏˘) 𝕩}¨ <trans
 #15↑ (3⊸⊏˘) flows

@@ -37,8 +37,3 @@ currValUSDT‿currValBTC ← ocmcPriceUSDT‿ocmcPriceBTC ×¨ <bgQty
 poSkip ← "BNB"‿"USDC"
 "portfolio-btc.csv" •FLines (<"asset,bgQty,bgPrice,bgVal,ocmcPrice,pctChange,vChange,currVal") ∾ csv.JoinL (¬bagAssets ∊ poSkip)⊸/ bagAssets∾˘ NFmt¨ tblBTC
 "portfolio-usdt.csv" •FLines (<"asset,bgQty,bgPrice,bgVal,ocmcPrice,pctChange,vChange,currVal") ∾ csv.JoinL (¬bagAssets ∊ poSkip)⊸/ bagAssets∾˘ NFmt¨ tblUSDT
-
-
-
-
-

@@ -18,6 +18,8 @@ FillMissing ← {
 # Function to loading quote candlesticks except USDT
 LoadQ ← { lquotes ← 𝕩
 	qfiles← (⊢∾⟜"_USDT-1h.json")¨ (<"/media/mu6mula/Data/Crypto-Data-Feed/freq-user-data/data/binance/") ∾¨ lquotes
+	#•Show lquotes
+	#•Show qfiles
 	qticks ← (((÷⟜1000∘⊏˘) ∾˘ ((+´÷≠)˘1‿2‿3‿4⊸⊏˘))∘>∘JParse∘•FChars)¨ qfiles
 	gbp ← ((FromTS¨⊏˘)∾˘( (+´÷≠)˘1‿2‿3‿4⊸⊏˘))  ((∾⟜0∘(str.ToNums⟨"-"⟩‿⟨" "⟩⊸str.ReplaceAll)¨∘⊏˘)∾˘(•ParseFloat¨˘ (¯1↓˘1⊸↓˘)))>¯1↓76000↓csv.Split•FChars"GBPUSD60.csv"
 	3↑¨ qgticks ←  qticks  ∾ <gbp
@@ -29,7 +31,7 @@ LoadTrades← {𝕊⋄⍉ ⊢‿⊢‿•ParseFloat‿⊢‿⊢‿•ParseFloat�
 AddQuoteUSDT ← {
 	trans ← 𝕩
 	# convert DAI USDC BUSD to USDT
-	qquotes← ⍷cquote ← ⥊((¬∊⟜"DAI"‿"USDC"‿"BUSD") ⊏˘ ((<"USDT")⊸∾˘)) ⥊˘4⊏˘ trans
+	qquotes← ⍷cquote ← ⥊((¬∊⟜"DAI"‿"USDC"‿"BUSD"‿"USD") ⊏˘ ((<"USDT")⊸∾˘)) ⥊˘4⊏˘ trans
 	# get unix timstamp and array datetime of transactions, truncated to hours
 	10↑ htts← FromTS¨ hdts← (∾⟜0‿0 4⊸↑)¨ dts← (str.ToNums  ⟨"-"⟩‿⟨" "⟩⊸str.ReplaceAll)¨ 1⊏˘ trans
 	lquotes ← ((¬∊⟜"GBP"‿"USDT")⊸/) qquotes

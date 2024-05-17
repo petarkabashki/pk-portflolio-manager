@@ -6,6 +6,37 @@ str←•Import "bqn-libs/strings.bqn"
 ToUpper ← -⟜(32×1="a{"⊸⍋)
 RowNu ← { ((↕≠𝕩)-𝕨) ∾˘ 𝕩}
 SplitNum ←•Parsefloat‿⊢{𝕎 𝕩}¨(("-."∾'0' + ↕10) (((⊢⋈¬)∘∊˜)/¨(<⊢)) ⊢)
+
+##########################################
+# FTX
+# TODO: Incorporate fees in received/spent if appropriate
+FtxTra← { 𝕤
+	hd‿data ← 1 (↑⋈↓) > csv.SplitL •FLines "../trading-data/ftx/main_trades.csv"
+	#hd‿data ← 1 (↑⋈↓) csv.SplitL •FLines "../trading-data/ftx/main_trades.csv"
+	3↑ data
+	side← ToUpper¨ 3⊏˘data
+	base‿quote ← <˘⍉> "/"⊸str.Split¨ 2⊏˘data
+	dt‿time ← <˘⍉> ", "⊸str.Split¨ 1⊏˘data
+	dtime ← (time ∾˜¨ <" ") ∾˜¨ (⊣∾⟜"-"∾⊢)´¨ ⌽¨ ("/"⊸str.Split)¨ dt
+	size‿price‿total‿fee ← <˘⍉•ParseFloat¨ 5‿6‿7‿8⊸⊏˘ data
+	# Checks
+	+´ 1 = total ≠ size × price
+		iside← ¯1+ 2×side ≡¨ (<"BUY")
+		sizeU ← base
+		totalU ← quote
+		calcTotal ← price ×¨ size
+		indReceived ← (base ≡¨ totalU) ≡¨ (iside≡¨1) 
+		indSpent ← 1 - indReceived
+		size_tot ← <˘⍉ size ≍ calcTotal 	
+		received ← indReceived ⊑¨ size_tot 
+		spent ← indSpent ⊑¨ size_tot
+		#fee ← •ParseFloat¨ 8⊏˘data
+		#feeU ← totalU
+		# check feeU == quote
+		+´ totalU ≢¨ quote
+		("exchange"‿"ts"‿"iside"‿"base"‿"quote"‿"received"‿"spent") ∾ (<"ftx") ∾˘ ⍉[dtime, iside, base, quote, received, spent]
+}
+
 ##########################################
 # Phemex
 # TODO: Incorporate fees in received/spent if appropriate
@@ -189,7 +220,7 @@ BitgetTra← { 𝕤
 ### Consolidate all trades
 
 # Load consolidated transactions ordered by timestamp
-≢ trans←  ((⍋1⊸⊏˘)⊏⊢) (⊏˘ ∾˘ ((10⊸↑⊸∾⟜" "⊸∾⟜(8⊸↑ 11⊸↓))¨ 1⊸⊏˘) ∾˘ 2⊸↓˘) ∾´ BinanceTra‿PhemexTra‿KucoinTra‿BitgetTra‿CoinbaseProTra { 1↓ 𝕎 𝕩}¨ <0
+≢ trans←  ((⍋1⊸⊏˘)⊏⊢) (⊏˘ ∾˘ ((10⊸↑⊸∾⟜" "⊸∾⟜(8⊸↑ 11⊸↓))¨ 1⊸⊏˘) ∾˘ 2⊸↓˘) ∾´ FtxTra‿BinanceTra‿PhemexTra‿KucoinTra‿BitgetTra‿CoinbaseProTra { 1↓ 𝕎 𝕩}¨ <0
 
 #3↑ trans
 #csv.Join 2‿3⥊↑"BQNcs"

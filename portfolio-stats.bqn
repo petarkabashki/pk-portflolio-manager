@@ -14,7 +14,7 @@ IfElse ← {cond‿True‿False: cond◶False‿True @}
 ((↕≠)≍⊢)∘⊑ bgh‿bgd ← ⊢‿>{𝕎𝕩}¨ 1(⊑∘↑⋈↓) csv.SplitL •FLines "bags.csv"
 
 ⍉ 3↑ bgd
-skip ← "USDT"‿"GBP"‿"BUSD"‿"DAI"
+skip ← "USDT"‿"GBP"‿"BUSD"‿"DAI"‿"USD"
 3↑ bags← (⍋⊏˘)⊸⊏ (¬∘⊏˘∊⟜skip)⊸/ (⊏˘∾˘(•ParseFloat¨ 1⊸↓˘)) ⟨"""","NaN"⟩‿⟨"","0"⟩⊸str.ReplaceAll¨ bgd 
 bagAssets←⊏˘bags
 
@@ -37,3 +37,4 @@ currValUSDT‿currValBTC ← ocmcPriceUSDT‿ocmcPriceBTC ×¨ <bgQty
 poSkip ← "BNB"‿"USDC"
 "portfolio-btc.csv" •FLines (<"asset,bgQty,bgPrice,bgVal,ocmcPrice,pctChange,vChange,currVal") ∾ csv.JoinL (¬bagAssets ∊ poSkip)⊸/ bagAssets∾˘ NFmt¨ tblBTC
 "portfolio-usdt.csv" •FLines (<"asset,bgQty,bgPrice,bgVal,ocmcPrice,pctChange,vChange,currVal") ∾ csv.JoinL (¬bagAssets ∊ poSkip)⊸/ bagAssets∾˘ NFmt¨ tblUSDT
+

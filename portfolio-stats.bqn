@@ -35,6 +35,7 @@ currValUSDT‿currValBTC ← ocmcPriceUSDT‿ocmcPriceBTC ×¨ <bgQty
 3↑tblUSDT ← bgQTY∾˘bgPriceUSDT∾˘bgValUSDT∾˘ocmcPriceUSDT∾˘pctChUSDT∾˘vChUSDT∾˘currValUSDT
 3↑tblBTC←bgQty∾˘bgPriceBTC∾˘bgValBTC∾˘ocmcPriceBTC∾˘pctChBTC∾˘vChBTC∾˘currValBTC
 poSkip ← "BNB"‿"USDC"
-"portfolio-btc.csv" •FLines (<"asset,bgQty,bgPrice,bgVal,ocmcPrice,pctChange,vChange,currVal") ∾ csv.JoinL (¬bagAssets ∊ poSkip)⊸/ bagAssets∾˘ NFmt¨ tblBTC
-"portfolio-usdt.csv" •FLines (<"asset,bgQty,bgPrice,bgVal,ocmcPrice,pctChange,vChange,currVal") ∾ csv.JoinL (¬bagAssets ∊ poSkip)⊸/ bagAssets∾˘ NFmt¨ tblUSDT
+balThre ← 100<bgValUSDT
+"portfolio-btc.csv" •FLines (<"asset,bgQty,bgPrice,bgVal,ocmcPrice,pctChange,vChange,currVal") ∾ csv.JoinL (balThre × ¬bagAssets ∊ poSkip)⊸/ bagAssets∾˘ NFmt¨ tblBTC
+"portfolio-usdt.csv" •FLines (<"asset,bgQty,bgPrice,bgVal,ocmcPrice,pctChange,vChange,currVal") ∾ csv.JoinL (balThre × ¬bagAssets ∊ poSkip)⊸/ bagAssets∾˘ NFmt¨ tblUSDT
 

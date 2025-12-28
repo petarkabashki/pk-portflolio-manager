@@ -28,7 +28,7 @@ from datetime import datetime
 from requests import Request, Session
 from dateutil import parser
 
-symbols = ['BTC,GBP,ETH,XRP,ALGO,ADA,LINK,BNB,DOT,XLM,LTC,AVAX,AAVE,EGLD,ATOM,DOGE,GRT,ENJ,CAKE,TRX,BUSD,LUNA,USDC,USDT,SOL,MATIC,FTM,FIL,ICP,CRV,REN,RUNE,KSM,ZIL,THETA,LRC,MANA,SHIB,ILV,GALA,AXS,SAND,RNDR,RENDER,CHZ,APT,ARB,OP,RAY,INJ,BEAM,NEAR,ALU,KAS,TIA,PYR,SNX,MYRIA,IMX,COQ,QNT,TET,AMP,PT,SUSHI,UNI,FLOW,WAVES,COMP']
+symbols = ['BTC,ETH,XRP,ALGO,ADA,LINK,BNB,DOT,POL,XLM,LTC,AVAX,AAVE,EGLD,ATOM,DOGE,GRT,ENJ,CAKE,TRX,BUSD,LUNA,USDC,USDT,SOL,MATIC,FIL,ICP,CRV,REN,RUNE,KSM,ZIL,THETA,LRC,MANA,SHIB,ILV,GALA,AXS,SAND,RNDR,RENDER,CHZ,APT,ARB,OP,RAY,INJ,BEAM,NEAR,ALU,KAS,TIA,PYR,SNX,MYRIA,IMX,COQ,QNT,TET,AMP,PT,SUSHI,UNI,FLOW,WAVES,COMP']
 convert = ['USDT' ]
 
 # def get_info():
@@ -58,7 +58,17 @@ session.headers.update(headers)
 response = session.get(url, params=parameters)
 data = json.loads(response.text)
 
-pd.DataFrame.from_records([{'asset':c, **data['data'][c]['quote']['USDT']} for  c in data['data'].keys()]).to_csv('cmc-quotes.csv')
+output_file = 'cmc-quotes.csv'
+pd.DataFrame.from_records([
+    {'asset':c, **data['data'][c]['quote']['USDT']} 
+    for  c in data['data'].keys()
+    if data['data'][c]['quote']['USDT']
+    ]).to_csv(output_file)
+
+
+print(f'Successfully downloaded {len(data["data"])} tickers to "{output_file}"')
 
 # cron 0 * * * * ~/miniconda3/envs/py310/bin/python ./get-latest-tickers.py
 # cron */60 * * * * /home/grenada/miniconda3/envs/py310/bin/python ./get-latest-tickers.py
+
+#%%

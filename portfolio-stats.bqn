@@ -25,7 +25,7 @@ bagAssets←⊏˘bags
 
 # take care of renamed assets and replace them with new names
 renOrig‿renNew ← <˘⍉>renamed ← ⟨"RNDR"‿"RENDER"⟩
-bagAssets ⇐ {ixo‿ixr←𝕩⋄n←≠renamed⋄IfElse (ixr=n)‿{𝕤⋄ixo⊑bagAssets}‿{𝕤⋄ixr⊑renNew}}¨ <˘⍉((↕≠)⊸≍) renOrig ⊐ bagAssets
+bagAssets ↩ {ixo‿ixr←𝕩⋄n←≠renamed⋄IfElse (ixr=n)‿{𝕤⋄ixo⊑bagAssets}‿{𝕤⋄ixr⊑renNew}}¨ <˘⍉((↕≠)⊸≍) renOrig ⊐ bagAssets
 
 btcCmc ← (⊑cmcAssets ⊐ <"BTC") ⊑ cmcPriceUSDT
 cmcPriceBTC ← cmcPriceUSDT ÷ btcCmc
